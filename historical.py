@@ -32,7 +32,7 @@ def get_data(data_path, ls_symbols):
         try:
             print "fetching data for stock: ", str(symbol_name)
             # params= urllib.urlencode ({'a':10, 'b':20, 'c':2012, 'd':_now.month, 'e':_now.day, 'f':_now.year, 's': str(symbol)})
-            params= urllib.urlencode ({'a':9, 'b':12, 'c':2013, 'd':11, 'e':12, 'f':2013, 's': str(symbol), 'g': 'd'})
+            params= urllib.urlencode ({'a':10, 'b':19, 'c':2013, 'd':11, 'e':19, 'f':2013, 's': str(symbol), 'g': 'd'})
             # params= urllib.urlencode ({'a':9, 'b':26, 'c':2012, 'd':10, 'e':28, 'f':2012, 's': str(symbol)})
             url = "http://ichart.finance.yahoo.com/table.csv?%s" % params
             url_get= urllib2.urlopen(url)
@@ -76,7 +76,7 @@ def read_symbols(s_symbols_file):
 
 def main():
     path = './'
-    ls_symbols = read_symbols('symbols.txt')
+    ls_symbols = read_symbols('symbols/symbols.txt')
     get_data(path, ls_symbols)
 
 if __name__ == '__main__':

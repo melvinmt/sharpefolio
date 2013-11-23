@@ -100,7 +100,7 @@ def main():
         if 'symbol' in company and 'name' in company:
             # print company['symbol'], "-", company['name']
             # print company['symbol']
-            print company['symbol'], company['name']
+            print company['symbol']
             # print company['name']
 
     # print "\n", industry_ids, "\n"

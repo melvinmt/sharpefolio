@@ -1,5 +1,4 @@
 import numpy as np
-import sys
 import math
 from numpy import recfromcsv
 from itertools import combinations
@@ -41,11 +40,10 @@ for i, file in enumerate(files):
     data = recfromcsv("data/"+file)
     ndata = np.copy(data)
     ndata.resize(datalength)
+    data = np.atleast_1d(data)
     print file + ":", data
     if len(data) == 0:
         continue
-
-    data = np.atleast_1d(data)
     if(len(data) < datalength):
         for i in range(len(data), len(ndata)):
             ndata[i] = data[-1]

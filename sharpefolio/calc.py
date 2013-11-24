@@ -16,7 +16,7 @@ class Ratio(object):
 
 		std = np.std(ret)
 
-		return self._get_ratio(adj_ret, std, n)
+		return self._get_info_ratio(adj_ret, std, n)
 
 	def sortino(self, prices, benchmark = None):
 		'''
@@ -33,9 +33,9 @@ class Ratio(object):
 
 		std = np.std(neg_ret)
 
-		return self._get_ratio(adj_ret, std, n)
+		return self._get_info_ratio(adj_ret, std, n)
 
-	def _get_ratio(self, ret, std, n):
+	def _get_info_ratio(self, ret, std, n):
 
 		avg = np.mean(ret)
 

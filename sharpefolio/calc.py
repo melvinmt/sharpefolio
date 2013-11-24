@@ -29,16 +29,9 @@ class Ratio(object):
 		ret = np.diff(prices)
 		b_ret = np.diff(benchmark)
 		adj_ret = [a - b for a, b in zip(ret, b_ret)]
-
-		print "adj_ret", adj_ret
-
 		neg_ret = [a for a in adj_ret if a < 0]
 
-		print "neg_ret", neg_ret
-
 		std = np.std(neg_ret)
-
-		print "std", std
 
 		return self._get_ratio(adj_ret, std, n)
 

@@ -20,8 +20,8 @@ class Ratio(object):
 
 	def sortino(self, prices, benchmark = None):
 		'''
-		sortino is an adjusted sharpe ratio which only takes
-		the standard deviation of negative returns into account
+		sortino is an adjusted ratio which only takes the 
+		standard deviation of negative returns into account
 		'''
 		n = len(prices)
 		benchmark = self._prepare_benchmark(benchmark, n)

@@ -31,9 +31,9 @@ class Ratio(object):
 		adj_ret = [a - b for a, b in zip(ret, b_ret)]
 		neg_ret = [a for a in adj_ret if a < 0]
 
-		std = np.std(neg_ret)
+		neg_std = np.std(neg_ret)
 
-		return self._get_info_ratio(adj_ret, std, n)
+		return self._get_info_ratio(adj_ret, neg_std, n)
 
 	def _get_info_ratio(self, ret, std, n):
 

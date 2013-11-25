@@ -18,33 +18,33 @@ class Stock(object):
 
 class StockMapper:
 	def __init__(self, repository):
-		self.repository = repository
+		self._repository = repository
 
 	def insert(self, model):
-		self.repository.insert(model)
+		self._repository.insert(model)
 
 	def find_by_symbol(self, symbol):
-		return self.repository.find_by_symbol(symbol)
+		return self._repository.find_by_symbol(symbol)
 
 	def find_all(self):
-		return self.repository.find_all()
+		return self._repository.find_all()
 
 class StockSqliteRepository:
 	def __init__(self, database):
-		self.database = database
+		self._database = database
 
 	def insert(self, model):
-		self.database.execute('INSERT INTO `stocks` (`symbol`, `company`) VALUES(?, ?)', (model.symbol, model.company))
-		self.database.commit()
+		self._database.execute('INSERT INTO `stocks` (`symbol`, `company`) VALUES(?, ?)', (model.symbol, model.company))
+		self._database.commit()
 
 	def find_by_symbol(self, symbol):
-		cursor = self.database.execute('SELECT * FROM `stocks` WHERE `symbol` = ? LIMIT 1', (symbol,))
+		cursor = self._database.execute('SELECT * FROM `stocks` WHERE `symbol` = ? LIMIT 1', (symbol,))
 		result = cursor.fetchone()
 
 		return self.build_model(result)
 
 	def find_all(self):
-		cursor = self.database.execute('SELECT * FROM `stocks`')
+		cursor = self._database.execute('SELECT * FROM `stocks`')
 		return StockCollection(cursor)
 
 	def build_model(self, data):
@@ -109,23 +109,44 @@ class Price(object):
 
 class PriceMapper:
 	def __init__(self, repository):
-		self.repository = repository
+		self._repository = repository
 
 	def insert(self, model):
-		self.repository.insert(model)
+		self._repository.insert(model)
+
+	def find_by_stock_id(self, stock_id):
+		return self._repository.find_by_stock_id(stock_id)
+
+	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
+		return self._repository.find_by_stock_id_in_range(stock_id, start_date, end_date)
 
 class PriceSqliteRepository:
 	def __init__(self, database):
-		self.database = database
+		self._database = database
 
 	def insert(self, model):
-		self.database.execute('\
+		self._database.execute('\
 			INSERT INTO `prices`\
 			(`stock_id`, `year`, `month`, `day`, `closing_price`, `change`)\
 			VALUES(?, ?, ?, ?, ?, ?)',
 			(model.stock_id, model.year, model.month, model.day, model.closing_price, model.change)
 		)
-		self.database.commit()
+		self._database.commit()
+
+	def find_by_stock_id(self, stock_id):
+		cursor = self._database.execute('SELECT * FROM `prices` WHERE `stock_id` = ? ORDER BY `year` ASC, `month` ASC, `day` ASC', (stock_id,))
+		return PriceCollection(cursor)
+
+	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
+		cursor = self._database.execute("\
+			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `the_date`\
+			FROM `prices`\
+			WHERE `stock_id` = ?\
+			AND `the_date` >= date(?)\
+			AND `the_date` <= date(?)\
+			ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
+		)
+		return PriceCollection(cursor)
 
 class PriceCollection:
 	def __init__(self, prices):

@@ -52,10 +52,3 @@ class Ratio(object):
 			raise Exception("benchmark mismatch")
 
 		return benchmark
-
-r = Ratio()
-prices = [1,1.2,.3,10,.3,25]
-sharpe = r.sharpe(prices)
-sortino = r.sortino(prices)
-print "sharpe:", sharpe, "sortino:", sortino
-

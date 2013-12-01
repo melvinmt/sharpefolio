@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date
+from datetime import date, timedelta
 from sharpefolio import stocks
 from sharpefolio import reports
 from sharpefolio import calc
@@ -23,22 +23,22 @@ report_mapper = reports.ReportMapper(report_repository)
 ratio_repository = reports.RatioSqliteRepository(connection)
 ratio_mapper = reports.RatioMapper(ratio_repository)
 
-# Report date range
-start_date = date(2013, 10, 1)
-end_date   = date(2013, 10, 31)
-
-report = reports.Report(start_date.year, start_date.month, start_date.day, duration=(end_date - start_date).days)
-# Pretend we got this from the database
-report._id = 1
+reports_collection = report_mapper.find_all()
 
 stock = stock_mapper.find_by_symbol('AAPL')
-prices_collection = price_mapper.find_by_stock_id_in_range(stock.id, start_date, end_date)
-
-prices = [price.closing_price for price in prices_collection]
 
 ratio_calc = calc.Ratio()
-sharpe = ratio_calc.sharpe(prices)
-sortino = ratio_calc.sortino(prices)
 
-ratio = reports.Ratio(stock.id, report.id, sharpe)
-ratio_mapper.insert(ratio)
+for report in reports_collection:
+	# Report date range
+	start_date = date(report.year, report.month, report.day)
+	end_date   = start_date + timedelta(days=report.duration)
+
+	stocks_collection = stock_mapper.find_all()
+	for stock in stocks_collection:
+		prices_collection = price_mapper.find_by_stock_id_in_range(stock.id, start_date, end_date)
+		prices = [price.closing_price for price in prices_collection]
+		sharpe = ratio_calc.sharpe(prices)
+		print 'generating report %d for %s (%d-%d-%d): %f' % (report.id, stock.symbol, report.year, report.month, report.day, sharpe)
+		ratio = reports.Ratio(stock.id, report.id, sharpe)
+		ratio_mapper.insert(ratio)

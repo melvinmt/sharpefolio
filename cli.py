@@ -32,7 +32,7 @@ for stock in stocks_collection:
 			raise e
 		else:
 			if data['query']['results'] == None:
-				print 'skipping empty result', stock.symbol, 'for', year
+				print '(%d) skipping empty result %s for %s' % (stock.id, stock.symbol, year)
 				continue
 
 			for info in data['query']['results']['quote']:
@@ -44,10 +44,10 @@ for stock in stocks_collection:
 					price = stocks.Price(stock.id, year, month, day, close, 0)
 					price_mapper.insert(price)
 				except Exception, e:
-					print 'error inserting', stock.symbol, 'for', year, '(', e ,')'
+					print '(%d) error inserting %s for %d (%s)' % (stock.id, stock.symbol, year, e)
 					pass
 				except urllib2.HTTPError, e:
-					print 'woo', e
+					print '(%d) HTTP Error %s' % (stock.id, e)
 					raise e
 				else:
-					print 'successfully imported', stock.symbol, 'for', year, month, day
+					print '(%d) successfully imported %s for %d-%d-%d' % (stock.id, stock.symbol, year, month, day)

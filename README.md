@@ -18,7 +18,7 @@ http://en.wikipedia.org/wiki/Sharpe_ratio
 
 http://en.wikipedia.org/wiki/Sortino_ratio
 
-## Disclaimer
+## LICENSE AND DISCLAIMER
 
 Copyright (c) 2013, Melvin Tercan (melvinmt), Lorenzo Pisani (Zeelot)
 All rights reserved.

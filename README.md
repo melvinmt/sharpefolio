@@ -15,4 +15,5 @@ However, one can't just simply pick the stocks with the highest individual ratio
 Sharpe and Sortino ratios have been invented to compare a portfolio's health with other portfolios. However, they can also be used "ex-ante" to estimate future prices.
 
 http://en.wikipedia.org/wiki/Sharpe_ratio
+
 http://en.wikipedia.org/wiki/Sortino_ratio

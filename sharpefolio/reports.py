@@ -1,13 +1,11 @@
 class Report(object):
-	def __init__(self, year, month, day, duration, formula='sharpe-v1.0-beta', correlated=False, top_n_stocks=4):
+	def __init__(self, year, month, day, duration, formula='sharpe-v1.0-beta'):
 		self._id = None
 		self._year = year
 		self._month = month
 		self._day = day;
 		self._duration = duration
 		self._formula = formula
-		self._correlated = correlated
-		self._top_n_stocks = top_n_stocks
 
 	@property
 	def id(self):
@@ -32,14 +30,6 @@ class Report(object):
 	@property
 	def formula(self):
 		return self._formula
-
-	@property
-	def correlated(self):
-		return self._correlated
-
-	@property
-	def top_n_stocks(self):
-		return self._top_n_stocks
 
 class ReportMapper:
 	def __init__(self, repository):
@@ -135,10 +125,59 @@ class RatioSqliteRepository:
 		)
 		self._database.commit()
 
-class Pick(object):
-	def __init__(self, report_id, stock_id, gain, weight):
+class Recipe(object):
+
+	def __init__(self, report_id, n_stocks=4, check_correlation=False, distribution='even'):
 		self._id = None
 		self._report_id = report_id
+		self._n_stocks = n_stocks
+		self._check_correlation = check_correlation
+		self._distribution = distribution
+
+	@property
+	def id(self):
+		return self._id
+
+	@property
+	def report_id(self):
+		return self._report_id
+
+	@property
+	def n_stocks(self):
+		return self._n_stocks
+
+	@property
+	def check_correlation(self):
+		return self._check_correlation
+
+	@property
+	def distribution(self):
+		return self._distribution
+
+class RecipeMapper:
+	def __init__(self, repository):
+		self._repository = repository
+
+	def insert(self, model):
+		self._repository.insert(model)
+
+class RecipeSqliteRepository:
+	def __init__(self, database):
+		self._database = database
+
+	def insert(self, model):
+		self._database.execute('\
+			INSERT INTO `recipes`\
+			(`report_id`, `n_stocks`, `check_correlation`, `distribution`)\
+			VALUES(?, ?, ?, ?)',
+			(model.report_id, model.n_stocks, model.check_correlation, model.distribution)
+		)
+		self._database.commit()
+
+class Pick(object):
+	def __init__(self, recipe_id, stock_id, gain, weight):
+		self._id = None
+		self._recipe_id = recipe_id
 		self._stock_id = stock_id
 		self._gain = gain
 		self._weight = weight
@@ -148,8 +187,8 @@ class Pick(object):
 		return self._id
 
 	@property
-	def report_id(self):
-		return self._report_id
+	def recipe_id(self):
+		return self._recipe_id
 
 	@property
 	def stock_id(self):
@@ -162,3 +201,23 @@ class Pick(object):
 	@property
 	def weight(self):
 		return self._weight
+
+class PickMapper:
+	def __init__(self, repository):
+		self._repository = repository
+
+	def insert(self, model):
+		self._repository.insert(model)
+
+class PickSqliteRepository:
+	def __init__(self, database):
+		self._database = database
+
+	def insert(self, model):
+		self._database.execute('\
+			INSERT INTO `picks`\
+			(`recipe_id`, `stock_id`, `gain`, `weight`)\
+			VALUES(?, ?, ?, ?)',
+			(model.recipe_id, model.stock_id, model.gain, model.weight)
+		)
+		self._database.commit()

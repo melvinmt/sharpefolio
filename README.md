@@ -1,6 +1,6 @@
 # Sharpefolio
 
-Stock picker algorithm based on least correlated historical Sharpe/Sortino ratios.
+Stock picker algorithm in Python based on least correlated historical sharpe / sortino ratios. 
 
 ## Wait, what?
 

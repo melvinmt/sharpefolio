@@ -2,3 +2,5 @@ data/*
 .DS_Store
 *.pyc
 tmp/*
+test.sqlite
+.vagrant/*

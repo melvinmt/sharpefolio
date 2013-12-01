@@ -48,18 +48,49 @@ class ReportMapper:
 	def insert(self, model):
 		self._repository.insert(model)
 
+	def find_all(self):
+		return self._repository.find_all()
+
 class ReportSqliteRepository:
 	def __init__(self, database):
 		self._database = database
 
 	def insert(self, model):
-		self._database.execute('\
+		cursor = self._database.cursor()
+		cursor.execute('\
 			INSERT INTO `reports`\
 			(`year`, `month`, `day`, `duration`, `formula`, `correlated`, `top_n_stocks`)\
 			VALUES(?, ?, ?, ?, ?)',
 			(model.year, model.month, model.day, model.duration, model.formula, model.correlated, model.top_n_stocks)
 		)
-		self._database.commit()
+		model._id = cursor.lastrowid
+
+	def find_all(self):
+		cursor = self._database.execute('SELECT * FROM `reports`')
+		return ReportCollection(cursor)
+
+class ReportCollection:
+	def __init__(self, reports):
+		self._reports = reports
+
+	def __iter__(self):
+		self._reports.__iter__()
+		return self;
+
+	def next(self):
+		next = self._reports.next()
+		return self.build_model(next)
+
+	def build_model(self, data):
+		model = Report(
+			data['year'],
+			data['month'],
+			data['day'],
+			data['duration'],
+			data['formula']
+		)
+		model._id = data['id']
+		return model
 
 class Ratio(object):
 	def __init__(self, stock_id, report_id, ratio):

@@ -5,50 +5,46 @@ class Ratio(object):
 	all list parameters are expected to be an one dimensional
 	list of nominal prices, e.g. [1,1.2,.3,10,.3,25]
 	'''
-	def sharpe(self, prices, benchmark = None):
+	def __init__(self, prices, benchmark = None):
+		self.prices = prices
+		self.n = len(self.prices)
+		self.benchmark = self._prepare_benchmark(benchmark)
+		self.ret = np.diff(self.prices)
+		self.b_ret = np.diff(self.benchmark)
 
-		n = len(prices)
-		benchmark = self._prepare_benchmark(benchmark, n)
+	def sharpe(self):
 
-		ret = np.diff(prices)
-		b_ret = np.diff(benchmark)
-		adj_ret = [a - b for a, b in zip(ret, b_ret)]
+		adj_ret = [a - b for a, b in zip(self.ret, self.b_ret)]
+		std = np.std(self.ret)
 
-		std = np.std(ret)
+		return self._get_info_ratio(adj_ret, std)
 
-		return self._get_info_ratio(adj_ret, std, n)
-
-	def sortino(self, prices, benchmark = None):
+	def sortino(self):
 		'''
 		sortino is an adjusted ratio which only takes the 
 		standard deviation of negative returns into account
 		'''
-		n = len(prices)
-		benchmark = self._prepare_benchmark(benchmark, n)
-
-		ret = np.diff(prices)
-		b_ret = np.diff(benchmark)
-		adj_ret = [a - b for a, b in zip(ret, b_ret)]
+		adj_ret = [a - b for a, b in zip(self.ret, self.b_ret)]
 		neg_ret = [a for a in adj_ret if a < 0]
 
 		neg_std = np.std(neg_ret)
 
-		return self._get_info_ratio(adj_ret, neg_std, n)
+		return self._get_info_ratio(adj_ret, neg_std)
 
-	def _get_info_ratio(self, ret, std, n):
+	def _get_info_ratio(self, ret, std):
 
 		avg = np.mean(ret)
 
 		if std > 0:
-			return avg * np.sqrt(n) / std
+			return avg * np.sqrt(self.n) / std
 		else:
 			return 0
 
-	def _prepare_benchmark(self, benchmark, n):
+	def _prepare_benchmark(self, benchmark):
 
 		if benchmark == None:
-			benchmark = np.zeros(n)
-		if len(benchmark) != n:
+			benchmark = np.zeros(self.n)
+		if len(benchmark) != self.n:
 			raise Exception("benchmark mismatch")
 
 		return benchmark

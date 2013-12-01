@@ -1,5 +1,5 @@
 class Report(object):
-	def __init__(self, year, month, day, duration, formula='sharpe-v1.0-beta'):
+	def __init__(self, year, month, day, duration, formula='sharpe-v1.0-beta', benchmark=''):
 		self._id = None
 		self._year = year
 		self._month = month
@@ -31,6 +31,10 @@ class Report(object):
 	def formula(self):
 		return self._formula
 
+	@property
+	def benchmark(self):
+		return self._benchmark
+
 class ReportMapper:
 	def __init__(self, repository):
 		self._repository = repository
@@ -49,9 +53,9 @@ class ReportSqliteRepository:
 		cursor = self._database.cursor()
 		cursor.execute('\
 			INSERT INTO `reports`\
-			(`year`, `month`, `day`, `duration`, `formula`, `correlated`, `top_n_stocks`)\
-			VALUES(?, ?, ?, ?, ?)',
-			(model.year, model.month, model.day, model.duration, model.formula, model.correlated, model.top_n_stocks)
+			(`year`, `month`, `day`, `duration`, `formula`, `correlated`, `top_n_stocks`, `benchmark`)\
+			VALUES(?, ?, ?, ?, ?, ?)',
+			(model.year, model.month, model.day, model.duration, model.formula, model.correlated, model.top_n_stocks, model.benchmark)
 		)
 		model._id = cursor.lastrowid
 
@@ -153,6 +157,7 @@ class Recipe(object):
 	@property
 	def distribution(self):
 		return self._distribution
+
 
 class RecipeMapper:
 	def __init__(self, repository):

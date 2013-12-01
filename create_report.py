@@ -27,7 +27,7 @@ reports_collection = report_mapper.find_all()
 
 stock = stock_mapper.find_by_symbol('AAPL')
 
-ratio_calc = calc.Ratio()
+
 
 for report in reports_collection:
 	# Report date range
@@ -38,7 +38,8 @@ for report in reports_collection:
 	for stock in stocks_collection:
 		prices_collection = price_mapper.find_by_stock_id_in_range(stock.id, start_date, end_date)
 		prices = [price.closing_price for price in prices_collection]
-		sharpe = ratio_calc.sharpe(prices)
+		ratio = calc.Ratio(prices)
+		sharpe = ratio.sharpe()
 		print 'generating report %d for %s (%d-%d-%d): %f' % (report.id, stock.symbol, report.year, report.month, report.day, sharpe)
 		ratio = reports.Ratio(stock.id, report.id, sharpe)
 		ratio_mapper.insert(ratio)

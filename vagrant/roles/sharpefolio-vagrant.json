@@ -1,0 +1,33 @@
+{
+    "name": "sharpefolio-vagrant",
+    "json_class": "Chef::Role",
+    "description": "Role for the vagrant vm for the sharpefolio app",
+    "chef_type": "role",
+
+    "default_attributes": {},
+    "override_attributes": {
+        "mysql": {
+            "server_root_password": "root",
+            "server_repl_password": "root",
+            "server_debian_password": "root",
+            "bind_address": "0.0.0.0"
+        },
+        "vm": {
+            "mysql": {
+                "databases": ["sharpefolio"],
+                "users": [{
+                    "username": "vagrant",
+                    "password": "vagrant"
+                }]
+            }
+        }
+    },
+    "run_list": [
+            "recipe[apt]",
+            "recipe[dev-vm]",
+            "recipe[git]",
+
+            "recipe[mysql::server]",
+            "recipe[dev-vm::mysql]"
+    ]
+}

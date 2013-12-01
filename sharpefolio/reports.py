@@ -140,7 +140,7 @@ class Pick(object):
 		self._id = None
 		self._report_id = report_id
 		self._stock_id = stock_id
-		self._gain = gain;
+		self._gain = gain
 		self._weight = weight
 
 	@property

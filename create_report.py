@@ -25,6 +25,8 @@ ratio_mapper = reports.RatioMapper(ratio_repository)
 
 reports_collection = report_mapper.find_all()
 
+stock = stock_mapper.find_by_symbol('AAPL')
+
 ratio_calc = calc.Ratio()
 
 for report in reports_collection:

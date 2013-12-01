@@ -27,7 +27,7 @@ ratio_mapper = reports.RatioMapper(ratio_repository)
 start_date = date(2013, 10, 1)
 end_date   = date(2013, 10, 31)
 
-report = reports.Report(start_date.year, start_date.month, start_date.day, (end_date - start_date).days, 'sharpe-v1.0-beta')
+report = reports.Report(start_date.year, start_date.month, start_date.day, duration=(end_date - start_date).days)
 # Pretend we got this from the database
 report._id = 1
 

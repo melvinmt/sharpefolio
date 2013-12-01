@@ -1,11 +1,13 @@
 class Report(object):
-	def __init__(self, year, month, day, duration, formula):
+	def __init__(self, year, month, day, duration, formula='sharpe-v1.0-beta', correlated=False, top_n_stocks=4):
 		self._id = None
 		self._year = year
 		self._month = month
 		self._day = day;
 		self._duration = duration
 		self._formula = formula
+		self._correlated = correlated
+		self._top_n_stocks = top_n_stocks
 
 	@property
 	def id(self):
@@ -31,6 +33,14 @@ class Report(object):
 	def formula(self):
 		return self._formula
 
+	@property
+	def correlated(self):
+		return self._correlated
+
+	@property
+	def top_n_stocks(self):
+		return self._top_n_stocks
+
 class ReportMapper:
 	def __init__(self, repository):
 		self._repository = repository
@@ -45,9 +55,9 @@ class ReportSqliteRepository:
 	def insert(self, model):
 		self._database.execute('\
 			INSERT INTO `reports`\
-			(`year`, `month`, `day`, `duration`, `formula`)\
+			(`year`, `month`, `day`, `duration`, `formula`, `correlated`, `top_n_stocks`)\
 			VALUES(?, ?, ?, ?, ?)',
-			(model.year, model.month, model.day, model.duration, model.formula)
+			(model.year, model.month, model.day, model.duration, model.formula, model.correlated, model.top_n_stocks)
 		)
 		self._database.commit()
 
@@ -93,3 +103,31 @@ class RatioSqliteRepository:
 			(model.stock_id, model.report_id, model.ratio)
 		)
 		self._database.commit()
+
+class Pick(object):
+	def __init__(self, report_id, stock_id, gain, weight):
+		self._id = None
+		self._report_id = report_id
+		self._stock_id = stock_id
+		self._gain = gain;
+		self._weight = weight
+
+	@property
+	def id(self):
+		return self._id
+
+	@property
+	def report_id(self):
+		return self._report_id
+
+	@property
+	def stock_id(self):
+		return self._stock_id
+
+	@property
+	def gain(self):
+		return self._gain
+
+	@property
+	def weight(self):
+		return self._weight

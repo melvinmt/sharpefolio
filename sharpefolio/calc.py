@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import combinations
 
 class Ratio(object):
 	'''
@@ -48,3 +49,69 @@ class Ratio(object):
 			raise Exception("benchmark mismatch")
 
 		return benchmark
+
+class InvertedCorrelationPicker(object):
+
+	def __init__(self, stocks):
+
+		self.stocks = stocks
+
+	def pick(self, portfolio_size=4):
+
+		price_len = 0
+		stocks_len = len(self.stocks)
+		symbols = [symbol for symbol in self.stocks.keys()]
+
+		# Determine depth of matrix
+		for symbol in symbols:
+			if len(self.stocks[symbol]) > price_len:
+				price_len = len(self.stocks[symbol])
+
+		if portfolio_size > price_len:
+			# Pick everything!
+			return symbols
+
+		# Create an empty datastructure to hold the daily returns
+		cov_data = np.zeros((price_len, stocks_len))
+
+		# Grab the daily returns for those stocks and put them in cov index
+		for i, symbol in enumerate(symbols):
+			prices = self.stocks[symbol]
+			# n = len(prices)
+			# if n < price_len:
+				# Forward fill
+				# prices += prices[-1:]*(price_len-n)
+			cov_data[:,i] = prices
+
+		# Make a correlation matrix
+		cormat = np.corrcoef(cov_data.transpose())
+
+		# Create all possible combinations of the n top equites for the given portfolio size.
+		portfolios = list(combinations(range(0, stocks_len), portfolio_size))
+
+		# Add up all the correlations for each possible combination
+		total_corr = [sum([cormat[x[0]][x[1]] for x in combinations(p, 2)]) for p in portfolios]
+
+		# Find the portfolio with the smallest sum of correlations
+		picks = [symbols[i] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
+
+		return picks
+
+stocks = {
+		  "AAPL": [0.23, 0.24, 0.25, 0.26],
+		  "TWTR": [-0.23, -0.24, -0.25, -0.26],
+		  "FB"  : [0.23, 0.24, 0.25, 0.26],
+		  "LNKD": [-0.23, -0.24, -0.25, -0.26],
+		  "ZNGA": [0.23, 0.24, 0.25, 0.26],
+		  "GRPN": [0.3, 0.29, 0.4, 0.23],
+		  "IBM" : [0.23, 0.24, 0.25, 0.26],
+		  "MSFT": [0.23, 0.24, 0.25, 0.26],
+		  "GOOG": [0.23, 0.24, 0.25, 0.26],
+		 }
+
+print stocks
+
+picker = InvertedCorrelationPicker(stocks)
+
+print picker.pick(44)
+

@@ -54,9 +54,28 @@ class InvertedCorrelationPicker(object):
 
 	def __init__(self, stocks):
 
+		'''
+		stocks = {
+				  "AAPL": [0.23, 0.24, 0.25, 0.26],
+				  "TWTR": [-0.23, -0.24, -0.25, -0.26],
+				  "FB"  : [0.23, 0.24, 0.25, 0.26],
+				  "LNKD": [-0.23, -0.24, -0.25, -0.26],
+				  "ZNGA": [0.23, 0.24, 0.25, 0.26],
+				  "GRPN": [0.3, 0.29, 0.4, 0.23],
+				  "IBM" : [0.23, 0.24, 0.25, 0.26],
+				  "MSFT": [0.23, 0.24, 0.25, 0.26],
+				  "GOOG": [0.23, 0.24, 0.25, 0.26],
+				 }
+		picker = InvertedCorrelationPicker(stocks)
+		'''
+
 		self.stocks = stocks
 
 	def pick(self, portfolio_size=4):
+
+		'''
+		picker.pick(4)
+		'''
 
 		price_len = 0
 		stocks_len = len(self.stocks)
@@ -96,22 +115,4 @@ class InvertedCorrelationPicker(object):
 		picks = [symbols[i] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
 
 		return picks
-
-stocks = {
-		  "AAPL": [0.23, 0.24, 0.25, 0.26],
-		  "TWTR": [-0.23, -0.24, -0.25, -0.26],
-		  "FB"  : [0.23, 0.24, 0.25, 0.26],
-		  "LNKD": [-0.23, -0.24, -0.25, -0.26],
-		  "ZNGA": [0.23, 0.24, 0.25, 0.26],
-		  "GRPN": [0.3, 0.29, 0.4, 0.23],
-		  "IBM" : [0.23, 0.24, 0.25, 0.26],
-		  "MSFT": [0.23, 0.24, 0.25, 0.26],
-		  "GOOG": [0.23, 0.24, 0.25, 0.26],
-		 }
-
-print stocks
-
-picker = InvertedCorrelationPicker(stocks)
-
-print picker.pick(44)
 

@@ -29,3 +29,21 @@ CREATE TABLE `ratios` (
   `ratio` double(10,6),
   PRIMARY KEY (`id`, `stock_id`, `report_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `picks` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `recipe_id` int(11) NOT NULL,
+  `stock_id` int(11) NOT NULL,
+  `gain` double(10,6),
+  `weight` double(10,6),
+  PRIMARY KEY (`id`, `recipe_id`, `stock_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `recipes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `recipe_id` int(11) NOT NULL,
+  `n_stocks` int(11) NOT NULL,
+  `check_correlation` tinyint(1) UNSIGNED NOT NULL,
+  `distribution` double(10,6),
+  PRIMARY KEY (`id`, `recipe_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8

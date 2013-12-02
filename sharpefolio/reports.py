@@ -1,5 +1,5 @@
 class Report(object):
-	def __init__(self, year, month, day, duration, formula='sharpe-v1.0-beta', benchmark=''):
+	def __init__(self, date, duration, formula='sharpe-v1.0-beta'):
 		self._id = None
 		self._year = year
 		self._month = month
@@ -31,10 +31,6 @@ class Report(object):
 	def formula(self):
 		return self._formula
 
-	@property
-	def benchmark(self):
-		return self._benchmark
-
 class ReportMapper:
 	def __init__(self, repository):
 		self._repository = repository
@@ -45,7 +41,7 @@ class ReportMapper:
 	def find_all(self):
 		return self._repository.find_all()
 
-class ReportSqliteRepository:
+class ReportMysqlRepository:
 	def __init__(self, database):
 		self._database = database
 
@@ -53,15 +49,16 @@ class ReportSqliteRepository:
 		cursor = self._database.cursor()
 		cursor.execute('\
 			INSERT INTO `reports`\
-			(`year`, `month`, `day`, `duration`, `formula`, `correlated`, `top_n_stocks`, `benchmark`)\
-			VALUES(?, ?, ?, ?, ?, ?)',
-			(model.year, model.month, model.day, model.duration, model.formula, model.correlated, model.top_n_stocks, model.benchmark)
+			(`date`, `duration`, `formula`)\
+			VALUES(%s, %s, %s)',
+			(model.date, model.duration, model.formula)
 		)
 		model._id = cursor.lastrowid
 
 	def find_all(self):
 		cursor = self._database.execute('SELECT * FROM `reports`')
 		return ReportCollection(cursor)
+
 
 class ReportCollection:
 	def __init__(self, reports):
@@ -77,9 +74,7 @@ class ReportCollection:
 
 	def build_model(self, data):
 		model = Report(
-			data['year'],
-			data['month'],
-			data['day'],
+			datetime.datetime.strptime(data['date'], "%Y-%m-%d").date(),
 			data['duration'],
 			data['formula']
 		)
@@ -125,6 +120,20 @@ class RatioSqliteRepository:
 			INSERT INTO `ratios`\
 			(`stock_id`, `report_id`, `ratio`)\
 			VALUES(?, ?, ?)',
+			(model.stock_id, model.report_id, model.ratio)
+		)
+		self._database.commit()
+
+class RatioMysqlRepository:
+	def __init__(self, database):
+		self._database = database
+
+	def insert(self, model):
+		cursor = self._database.cursor()
+		cursor.execute('\
+			INSERT INTO `ratios`\
+			(`stock_id`, `report_id`, `ratio`)\
+			VALUES(%s, %s, %s)',
 			(model.stock_id, model.report_id, model.ratio)
 		)
 		self._database.commit()

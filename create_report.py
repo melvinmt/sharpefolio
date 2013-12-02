@@ -27,8 +27,6 @@ reports_collection = report_mapper.find_all()
 
 stock = stock_mapper.find_by_symbol('AAPL')
 
-
-
 for report in reports_collection:
 	# Report date range
 	start_date = date(report.year, report.month, report.day)

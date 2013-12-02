@@ -1,9 +1,9 @@
+import datetime
+
 class Report(object):
 	def __init__(self, date, duration, formula='sharpe-v1.0-beta'):
 		self._id = None
-		self._year = year
-		self._month = month
-		self._day = day;
+		self._date = date
 		self._duration = duration
 		self._formula = formula
 
@@ -12,16 +12,8 @@ class Report(object):
 		return self._id
 
 	@property
-	def year(self):
-		return self._year
-
-	@property
-	def month(self):
-		return self._month
-
-	@property
-	def day(self):
-		return self._day
+	def date(self):
+		return self._date
 
 	@property
 	def duration(self):
@@ -58,7 +50,6 @@ class ReportMysqlRepository:
 	def find_all(self):
 		cursor = self._database.execute('SELECT * FROM `reports`')
 		return ReportCollection(cursor)
-
 
 class ReportCollection:
 	def __init__(self, reports):

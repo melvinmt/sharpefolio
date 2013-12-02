@@ -64,6 +64,17 @@ class StockMysqlRepository:
 		self._database = database
 
 	def insert(self, model):
+		if model.id == None:
+			self._insert_no_pk(model)
+		else:
+			self._insert_full(model)
+
+	def _insert_full(self, model):
+		cursor = self._database.cursor()
+		cursor.execute('INSERT INTO `stocks` (`id`, `symbol`, `company`) VALUES(%s, %s, %s)', (model.id, model.symbol, model.company))
+		self._database.commit()
+
+	def _insert_no_pk(self, model):
 		cursor = self._database.cursor()
 		cursor.execute('INSERT INTO `stocks` (`symbol`, `company`) VALUES(%s, %s)', (model.symbol, model.company))
 		self._database.commit()

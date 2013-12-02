@@ -1,3 +1,6 @@
+import MySQLdb
+import datetime
+
 class Stock(object):
 	def __init__(self, symbol, company):
 		self._id = None
@@ -56,6 +59,36 @@ class StockSqliteRepository:
 
 		return model;
 
+class StockMysqlRepository:
+	def __init__(self, database):
+		self._database = database
+
+	def insert(self, model):
+		cursor = self._database.cursor()
+		cursor.execute('INSERT INTO `stocks` (`symbol`, `company`) VALUES(%s, %s)', (model.symbol, model.company))
+		self._database.commit()
+
+	def find_by_symbol(self, symbol):
+		cursor = self._database.cursor()
+		cursor._database.execute('SELECT * FROM `stocks` WHERE `symbol` = %s LIMIT 1', (symbol,))
+		result = cursor.fetchone()
+
+		return self.build_model(result)
+
+	def find_all(self):
+		cursor = self._database.cursor()
+		cursor.execute('SELECT * FROM `stocks`')
+		return StockCollection(cursor)
+
+	def build_model(self, data):
+		if (data == None):
+			return None
+
+		model = Stock(data['symbol'], data['company'])
+		model._id = data['id']
+
+		return model;
+
 class StockCollection:
 	def __init__(self, stocks):
 		self._stocks = stocks
@@ -74,30 +107,24 @@ class StockCollection:
 		return model;
 
 class Price(object):
-	def __init__(self, stock_id, year, month, day, closing_price, change):
+	def __init__(self, stock_id, date, closing_price, change):
 		self._id = None
 		self._stock_id = stock_id
-		self._year = year
-		self._month = month
-		self._day = day
+		self._date = date
 		self._closing_price = closing_price
 		self._change = change
+
+	@property
+	def id(self):
+		return self._id
 
 	@property
 	def stock_id(self):
 		return self._stock_id
 
 	@property
-	def year(self):
-		return self._year
-
-	@property
-	def month(self):
-		return self._month
-
-	@property
-	def day(self):
-		return self._day
+	def date(self):
+		return self._date
 
 	@property
 	def closing_price(self):
@@ -134,38 +161,71 @@ class PriceSqliteRepository:
 		self._database.commit()
 
 	def find_by_stock_id(self, stock_id):
-		cursor = self._database.execute('SELECT * FROM `prices` WHERE `stock_id` = ? ORDER BY `year` ASC, `month` ASC, `day` ASC', (stock_id,))
+		cursor = self._database.cursor()
+		cursor.execute("\
+			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `date`\
+			FROM `prices`\
+			WHERE `stock_id` = ? ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id,))
 		return PriceCollection(cursor)
 
 	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
 		cursor = self._database.execute("\
-			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `the_date`\
+			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `date`\
 			FROM `prices`\
 			WHERE `stock_id` = ?\
-			AND `the_date` >= date(?)\
-			AND `the_date` <= date(?)\
+			AND `date` >= date(?)\
+			AND `date` <= date(?)\
 			ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
 		)
+		return PriceCollection(cursor)
+
+class PriceMysqlRepository:
+	def __init__(self, database):
+		self._database = database
+
+	def insert(self, model):
+		if model.id == None:
+			self._insert_no_pk(model)
+		else:
+			self._insert_full(model)
+
+	def _insert_full(self, model):
+		cursor = self._database.cursor()
+		cursor.execute('\
+			INSERT INTO `prices`\
+			(`id`, `stock_id`, `date`, `closing_price`, `change`)\
+			VALUES(%s, %s, %s, %s, %s)',
+			(model.id, model.stock_id, model.date, model.closing_price, model.change)
+		)
+		self._database.commit()
+
+	def _insert_no_pk(self, model):
+		cursor = self._database.cursor()
+		cursor.execute('\
+			INSERT INTO `prices`\
+			(`stock_id`, `date`, `closing_price`, `change`)\
+			VALUES(%s, %s, %s, %s)',
+			(model.stock_id, model.date, model.closing_price, model.change)
+		)
+		self._database.commit()
+
+	def find_by_stock_id(self, stock_id):
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute('SELECT * FROM `prices` WHERE `stock_id` = %s ORDER BY `date` ASC', (stock_id,))
 		return PriceCollection(cursor)
 
 class PriceCollection:
 	def __init__(self, prices):
 		self._prices = prices
 
-	def __iter__(self):
-		self._prices.__iter__()
-		return self;
-
-	def next(self):
-		next = self._prices.next()
-		return self.build_model(next)
+	def loop(self):
+		for price in self._prices:
+			yield self.build_model(price)
 
 	def build_model(self, data):
 		model = Price(
 			data['stock_id'],
-			data['year'],
-			data['month'],
-			data['day'],
+			datetime.datetime.strptime(data['date'], "%Y-%m-%d").date(),
 			data['closing_price'],
 			data['change']
 		)

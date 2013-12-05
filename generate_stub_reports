@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+import MySQLdb
+import datetime
+from sharpefolio import reports
+
+def count_weekdays(start, end):
+	count = 0
+	while start <= end:
+		if start.weekday() < 5:
+			count += 1
+
+		start += datetime.timedelta(days=1)
+	return count
+
+mysql_connection = MySQLdb.connect(
+	host="127.0.0.1",
+	user="vagrant",
+	passwd="vagrant",
+	db="sharpefolio"
+)
+
+report_repository = reports.ReportMysqlRepository(mysql_connection)
+report_mapper = reports.ReportMapper(report_repository)
+
+today = datetime.date.today()
+
+for weeks_num in [1,2,3,4,5,6]:
+	end_date = datetime.date(2012, 12, 03)
+	while end_date < today:
+		start_date = end_date - datetime.timedelta(weeks=weeks_num, days=-1)
+		try:
+			report = reports.Report(end_date, count_weekdays(start_date, end_date), "sharpe-v1.0-beta")
+			report_mapper.insert(report)
+			report = reports.Report(end_date, count_weekdays(start_date, end_date), "sortino-v1.0-beta")
+			report_mapper.insert(report)
+		except Exception, e:
+			print e
+		end_date += datetime.timedelta(days=1)

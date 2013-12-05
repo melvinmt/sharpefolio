@@ -19,7 +19,8 @@ CREATE TABLE `reports` (
   `date` date NOT NULL,
   `duration` int(11) NOT NULL,
   `formula` varchar(50) NOT NULL,
-  PRIMARY KEY (`id`, `date`, `duration`, `formula`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_report` (`date`, `duration`, `formula`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `ratios` (

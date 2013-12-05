@@ -48,3 +48,6 @@ CREATE TABLE `recipes` (
   `distribution` double(10,6),
   PRIMARY KEY (`id`, `recipe_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+ALTER TABLE `sharpefolio`.`prices`
+ADD UNIQUE INDEX `unique_price` (`stock_id` ASC, `date` ASC);

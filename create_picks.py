@@ -1,34 +1,39 @@
-import sqlite3
 from sharpefolio import stocks
 from sharpefolio import reports
 from sharpefolio import calc
 from datetime import date, timedelta
+import sys
+import MySQLdb
 
-connection = sqlite3.connect('test.sqlite')
-connection.row_factory = sqlite3.Row
+connection = MySQLdb.connect(
+	host="127.0.0.1",
+	user="vagrant",
+	passwd="vagrant",
+	db="sharpefolio"
+)
 
 # Set up stock mapper
-stock_repository = stocks.StockSqliteRepository(connection)
+stock_repository = stocks.StockMysqlRepository(connection)
 stock_mapper = stocks.StockMapper(stock_repository)
 
 # Set up price mapper
-price_repository = stocks.PriceSqliteRepository(connection)
+price_repository = stocks.PriceMysqlRepository(connection)
 price_mapper = stocks.PriceMapper(price_repository)
 
 # Set up report mapper
-report_repository = reports.ReportSqliteRepository(connection)
+report_repository = reports.ReportMysqlRepository(connection)
 report_mapper = reports.ReportMapper(report_repository)
 
 # Set up ratio mapper
-ratio_repository = reports.RatioSqliteRepository(connection)
+ratio_repository = reports.RatioMysqlRepository(connection)
 ratio_mapper = reports.RatioMapper(ratio_repository)
 
 # Set up pick mapper
-pick_repository = reports.PickSqliteRepository(connection)
+pick_repository = reports.PickMysqlRepository(connection)
 pick_mapper = reports.PickMapper(pick_repository)
 
 # Set up recipe mapper
-recipe_repository = reports.RecipeSqliteRepository(connection)
+recipe_repository = reports.RecipeMysqlRepository(connection)
 recipe_mapper = reports.RecipeMapper(recipe_repository)
 
 reports_collection = report_mapper.find_all()
@@ -47,7 +52,12 @@ def recipes_for_combos(combos):
 				recipe = reports.Recipe(report.id, n_stocks, check_correlation, distribution)
 				recipes.append(recipe)
 
+	print recipes
+
 	return recipes
+
+recipes_for_combos(combos)
+sys.exit()
 
 def picks_with_least_correlation(recipe):
 

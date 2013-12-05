@@ -1,7 +1,7 @@
 import datetime
 
 class Report(object):
-	def __init__(self, date, duration, formula='sharpe-v1.0-beta'):
+	def __init__(self, date, duration, formula):
 		self._id = None
 		self._date = date
 		self._duration = duration

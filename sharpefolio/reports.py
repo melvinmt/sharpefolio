@@ -175,7 +175,7 @@ class RecipeMapper:
 	def insert(self, model):
 		self._repository.insert(model)
 
-class RecipeSqliteRepository:
+class RecipeMysqlRepository:
 	def __init__(self, database):
 		self._database = database
 
@@ -223,7 +223,7 @@ class PickMapper:
 	def insert(self, model):
 		self._repository.insert(model)
 
-class PickSqliteRepository:
+class PickMysqlRepository:
 	def __init__(self, database):
 		self._database = database
 

@@ -36,7 +36,7 @@ class Ratio(object):
 
 		avg = np.mean(ret)
 
-		if std > 0:
+		if std > 0.0001:
 			return avg * np.sqrt(self.n) / std
 		else:
 			return 0

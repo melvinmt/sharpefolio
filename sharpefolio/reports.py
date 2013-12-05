@@ -1,4 +1,5 @@
 import datetime
+import MySQLdb
 
 class Report(object):
 	def __init__(self, date, duration, formula):
@@ -22,6 +23,16 @@ class Report(object):
 	@property
 	def formula(self):
 		return self._formula
+
+	def start_date(self):
+		start_date = self._date
+		weekdays = 0;
+		while weekdays < self._duration:
+			start_date -= datetime.timedelta(days=1)
+			if start_date.weekday() < 5:
+				weekdays += 1
+
+		return start_date
 
 class ReportMapper:
 	def __init__(self, repository):
@@ -49,24 +60,21 @@ class ReportMysqlRepository:
 		model._id = cursor.lastrowid
 
 	def find_all(self):
-		cursor = self._database.execute('SELECT * FROM `reports`')
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute('SELECT * FROM `reports`')
 		return ReportCollection(cursor)
 
 class ReportCollection:
 	def __init__(self, reports):
 		self._reports = reports
 
-	def __iter__(self):
-		self._reports.__iter__()
-		return self;
-
-	def next(self):
-		next = self._reports.next()
-		return self.build_model(next)
+	def loop(self):
+		for report in self._reports:
+			yield self.build_model(report)
 
 	def build_model(self, data):
 		model = Report(
-			datetime.datetime.strptime(data['date'], "%Y-%m-%d").date(),
+			datetime.datetime.strptime("%s" % data['date'], "%Y-%m-%d").date(),
 			data['duration'],
 			data['formula']
 		)

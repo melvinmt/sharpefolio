@@ -87,7 +87,7 @@ class StockMysqlRepository:
 		return self.build_model(result)
 
 	def find_all(self):
-		cursor = self._database.cursor()
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
 		cursor.execute('SELECT * FROM `stocks`')
 		return StockCollection(cursor)
 
@@ -104,13 +104,9 @@ class StockCollection:
 	def __init__(self, stocks):
 		self._stocks = stocks
 
-	def __iter__(self):
-		self._stocks.__iter__()
-		return self;
-
-	def next(self):
-		next = self._stocks.next()
-		return self.build_model(next)
+	def loop(self):
+		for stock in self._stocks:
+			yield self.build_model(stock)
 
 	def build_model(self, data):
 		model = Stock(data['symbol'], data['company'])
@@ -225,6 +221,18 @@ class PriceMysqlRepository:
 		cursor.execute('SELECT * FROM `prices` WHERE `stock_id` = %s ORDER BY `date` ASC', (stock_id,))
 		return PriceCollection(cursor)
 
+	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute("\
+			SELECT *\
+			FROM `prices`\
+			WHERE `stock_id` = %s\
+			AND `date` >= %s\
+			AND `date` <= %s\
+			ORDER BY `date` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
+		)
+		return PriceCollection(cursor)
+
 class PriceCollection:
 	def __init__(self, prices):
 		self._prices = prices
@@ -236,7 +244,7 @@ class PriceCollection:
 	def build_model(self, data):
 		model = Price(
 			data['stock_id'],
-			datetime.datetime.strptime(data['date'], "%Y-%m-%d").date(),
+			datetime.datetime.strptime("%s" % data['date'], "%Y-%m-%d").date(),
 			data['closing_price'],
 			data['change']
 		)

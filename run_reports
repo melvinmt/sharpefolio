@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+import MySQLdb
+from datetime import date, timedelta
+from sharpefolio import stocks
+from sharpefolio import reports
+from sharpefolio import calc
+
+connection = MySQLdb.connect(
+	host="127.0.0.1",
+	user="vagrant",
+	passwd="vagrant",
+	db="sharpefolio"
+)
+
+report_repository = reports.ReportMysqlRepository(connection)
+report_mapper = reports.ReportMapper(report_repository)
+
+# Set up stock mapper
+stock_repository = stocks.StockMysqlRepository(connection)
+stock_mapper = stocks.StockMapper(stock_repository)
+
+# Set up price mapper
+price_repository = stocks.PriceMysqlRepository(connection)
+price_mapper = stocks.PriceMapper(price_repository)
+
+# Set up report mapper
+report_repository = reports.ReportMysqlRepository(connection)
+report_mapper = reports.ReportMapper(report_repository)
+
+# Set up ratio mapper
+ratio_repository = reports.RatioMysqlRepository(connection)
+ratio_mapper = reports.RatioMapper(ratio_repository)
+
+reports_collection = report_mapper.find_all()
+
+for report in reports_collection.loop():
+	# Report date range
+	end_date   = report.date
+	start_date = report.start_date()
+
+	stocks_collection = stock_mapper.find_all()
+	for stock in stocks_collection.loop():
+		prices_collection = price_mapper.find_by_stock_id_in_range(stock.id, start_date, end_date)
+		prices = [price.closing_price for price in prices_collection.loop()]
+
+		ratio = calc.Ratio(prices)
+		if (report.formula == 'sharpe-v1.0-beta'):
+			value = sharpe = ratio.sharpe()
+		else:
+			value = ratio.sortino()
+
+		print 'generating report %d for %s (%s): %f' % (report.id, stock.symbol, report.date, value)
+		ratio_entry = reports.Ratio(stock.id, report.id, value)
+		ratio_mapper.insert(ratio_entry)

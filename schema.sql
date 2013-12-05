@@ -28,7 +28,8 @@ CREATE TABLE `ratios` (
   `stock_id` int(11) NOT NULL,
   `report_id` int(11) NOT NULL,
   `ratio` double(10,6),
-  PRIMARY KEY (`id`, `stock_id`, `report_id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY (`stock_id`, `report_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `picks` (

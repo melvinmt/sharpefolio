@@ -45,6 +45,7 @@ class ReportMysqlRepository:
 			VALUES(%s, %s, %s)',
 			(model.date, model.duration, model.formula)
 		)
+		self._database.commit()
 		model._id = cursor.lastrowid
 
 	def find_all(self):

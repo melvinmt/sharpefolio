@@ -24,12 +24,13 @@ CREATE TABLE `reports` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `ratios` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `stock_id` int(11) NOT NULL,
   `report_id` int(11) NOT NULL,
   `ratio` double(10,6),
   PRIMARY KEY (`id`),
-  UNIQUE KEY (`stock_id`, `report_id`)
+  UNIQUE KEY (`stock_id`, `report_id`),
+  KEY `ratio` (`ratio`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `picks` (

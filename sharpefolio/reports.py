@@ -107,7 +107,7 @@ class RecipeMysqlRepository(dm.MysqlRepository):
 
 class Pick(object):
 	def __init__(self, recipe_id, stock_id, gain, weight, id=None):
-		self.id = None
+		self.id = id
 		self.recipe_id = recipe_id
 		self.stock_id = stock_id
 		self.gain = gain

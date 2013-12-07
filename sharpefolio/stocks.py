@@ -51,7 +51,7 @@ class StockMysqlRepository(dm.MysqlRepository):
 
 	def find_by_symbol(self, symbol):
 		cursor = self._database.cursor()
-		cursor._database.execute('SELECT * FROM `stocks` WHERE `symbol` = %s LIMIT 1', (symbol,))
+		cursor.execute('SELECT * FROM `stocks` WHERE `symbol` = %s LIMIT 1', (symbol,))
 		result = cursor.fetchone()
 		return Stock(**result)
 

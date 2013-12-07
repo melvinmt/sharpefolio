@@ -1,28 +1,14 @@
 import MySQLdb
 import datetime
+import datamapper as dm
 
 class Stock(object):
-	def __init__(self, symbol, company):
-		self._id = None
-		self._symbol = symbol
-		self._company = company
+	def __init__(self, symbol, company, id = None):
+		self.id = id
+		self.symbol = symbol
+		self.company = company
 
-	@property
-	def id(self):
-		return self._id
-
-	@property
-	def symbol(self):
-		return self._symbol
-
-	@property
-	def company(self):
-		return self._company
-
-class StockMapper:
-	def __init__(self, repository):
-		self._repository = repository
-
+class StockMapper(dm.Mapper):
 	def insert(self, model):
 		self._repository.insert(model)
 
@@ -32,10 +18,7 @@ class StockMapper:
 	def find_all(self):
 		return self._repository.find_all()
 
-class StockSqliteRepository:
-	def __init__(self, database):
-		self._database = database
-
+class StockSqliteRepository(dm.SqliteRepository):
 	def insert(self, model):
 		self._database.execute('INSERT INTO `stocks` (`symbol`, `company`) VALUES(?, ?)', (model.symbol, model.company))
 		self._database.commit()
@@ -43,26 +26,13 @@ class StockSqliteRepository:
 	def find_by_symbol(self, symbol):
 		cursor = self._database.execute('SELECT * FROM `stocks` WHERE `symbol` = ? LIMIT 1', (symbol,))
 		result = cursor.fetchone()
-
-		return self.build_model(result)
+		return Stock(**result)
 
 	def find_all(self):
 		cursor = self._database.execute('SELECT * FROM `stocks`')
-		return StockCollection(cursor)
+		return dm.Collection(Stock, cursor)
 
-	def build_model(self, data):
-		if (data == None):
-			return None
-
-		model = Stock(data['symbol'], data['company'])
-		model._id = data['id']
-
-		return model;
-
-class StockMysqlRepository:
-	def __init__(self, database):
-		self._database = database
-
+class StockMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
 		if model.id == None:
 			self._insert_no_pk(model)
@@ -83,68 +53,22 @@ class StockMysqlRepository:
 		cursor = self._database.cursor()
 		cursor._database.execute('SELECT * FROM `stocks` WHERE `symbol` = %s LIMIT 1', (symbol,))
 		result = cursor.fetchone()
-
-		return self.build_model(result)
+		return Stock(**result)
 
 	def find_all(self):
 		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
 		cursor.execute('SELECT * FROM `stocks`')
-		return StockCollection(cursor)
-
-	def build_model(self, data):
-		if (data == None):
-			return None
-
-		model = Stock(data['symbol'], data['company'])
-		model._id = data['id']
-
-		return model;
-
-class StockCollection:
-	def __init__(self, stocks):
-		self._stocks = stocks
-
-	def loop(self):
-		for stock in self._stocks:
-			yield self.build_model(stock)
-
-	def build_model(self, data):
-		model = Stock(data['symbol'], data['company'])
-		model._id = data['id']
-		return model;
+		return dm.Collection(Stock, cursor)
 
 class Price(object):
-	def __init__(self, stock_id, date, closing_price, change):
-		self._id = None
-		self._stock_id = stock_id
-		self._date = date
-		self._closing_price = closing_price
-		self._change = change
+	def __init__(self, stock_id, date, closing_price, change, id = None):
+		self.id = id
+		self.stock_id = stock_id
+		self.date = date
+		self.closing_price = closing_price
+		self.change = change
 
-	@property
-	def id(self):
-		return self._id
-
-	@property
-	def stock_id(self):
-		return self._stock_id
-
-	@property
-	def date(self):
-		return self._date
-
-	@property
-	def closing_price(self):
-		return self._closing_price
-
-	@property
-	def change(self):
-		return self._change
-
-class PriceMapper:
-	def __init__(self, repository):
-		self._repository = repository
-
+class PriceMapper(dm.Mapper):
 	def insert(self, model):
 		self._repository.insert(model)
 
@@ -154,10 +78,7 @@ class PriceMapper:
 	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
 		return self._repository.find_by_stock_id_in_range(stock_id, start_date, end_date)
 
-class PriceSqliteRepository:
-	def __init__(self, database):
-		self._database = database
-
+class PriceSqliteRepository(dm.SqliteRepository):
 	def insert(self, model):
 		self._database.execute('\
 			INSERT INTO `prices`\
@@ -173,7 +94,8 @@ class PriceSqliteRepository:
 			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `date`\
 			FROM `prices`\
 			WHERE `stock_id` = ? ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id,))
-		return PriceCollection(cursor)
+		data = self._parse_date_in_cursor(cursor)
+		return dm.Collection(Price, data)
 
 	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
 		cursor = self._database.execute("\
@@ -184,12 +106,17 @@ class PriceSqliteRepository:
 			AND `date` <= date(?)\
 			ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
 		)
-		return PriceCollection(cursor)
+		data = self._parse_date_in_cursor(cursor)
+		return dm.Collection(Price, data)
 
-class PriceMysqlRepository:
-	def __init__(self, database):
-		self._database = database
+	def _parse_date_in_cursor(self, cursor):
+		data = []
+		for row in cursor:
+			row['date'] = datetime.datetime.strptime("%s" % data['date'], "%Y-%m-%d").date()
+			data.append(row)
+		return data
 
+class PriceMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
 		if model.id == None:
 			self._insert_no_pk(model)
@@ -219,7 +146,7 @@ class PriceMysqlRepository:
 	def find_by_stock_id(self, stock_id):
 		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
 		cursor.execute('SELECT * FROM `prices` WHERE `stock_id` = %s ORDER BY `date` ASC', (stock_id,))
-		return PriceCollection(cursor)
+		return dm.Collection(Price, cursor)
 
 	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
 		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
@@ -231,22 +158,4 @@ class PriceMysqlRepository:
 			AND `date` <= %s\
 			ORDER BY `date` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
 		)
-		return PriceCollection(cursor)
-
-class PriceCollection:
-	def __init__(self, prices):
-		self._prices = prices
-
-	def loop(self):
-		for price in self._prices:
-			yield self.build_model(price)
-
-	def build_model(self, data):
-		model = Price(
-			data['stock_id'],
-			datetime.datetime.strptime("%s" % data['date'], "%Y-%m-%d").date(),
-			data['closing_price'],
-			data['change']
-		)
-		model._id = data['id']
-		return model;
+		return dm.Collection(Price, cursor)

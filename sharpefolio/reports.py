@@ -41,15 +41,11 @@ class ReportMysqlRepository(dm.MysqlRepository):
 	def find_all(self):
 		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
 		cursor.execute('SELECT * FROM `reports`')
-		cursor = self._prepare_cursor(cursor)
-		return dm.Collection(Report, cursor)
+		return dm.Collection(Report, cursor, self._datamap)
 
-	def _prepare_cursor(self, cursor):
-		new_cursor = []
-		for row in cursor:
-			row['date'] = datetime.datetime.strptime("%s" % row['date'], "%Y-%m-%d").date()
-			new_cursor.append(row)
-		return new_cursor
+	def _datamap(self, data):
+		data['date'] = datetime.datetime.strptime("%s" % data['date'], "%Y-%m-%d").date()
+		return data
 
 class Ratio(object):
 	def __init__(self, stock_id, report_id, ratio, id = None):

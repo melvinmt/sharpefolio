@@ -94,8 +94,7 @@ class PriceSqliteRepository(dm.SqliteRepository):
 			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `date`\
 			FROM `prices`\
 			WHERE `stock_id` = ? ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id,))
-		cursor = self._prepare_cursor(cursor)
-		return dm.Collection(Price, cursor)
+		return dm.Collection(Price, cursor, self._datamap)
 
 	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
 		cursor = self._database.execute("\
@@ -106,15 +105,11 @@ class PriceSqliteRepository(dm.SqliteRepository):
 			AND `date` <= date(?)\
 			ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
 		)
-		cursor = self._prepare_cursor(cursor)
-		return dm.Collection(Price, cursor)
+		return dm.Collection(Price, cursor, self._datamap)
 
-	def _prepare_cursor(self, cursor):
-		new_cursor = []
-		for row in cursor:
-			row['date'] = datetime.datetime.strptime("%s" % row['date'], "%Y-%m-%d").date()
-			new_cursor.append(row)
-		return new_cursor
+	def _datamap(self, data):
+		data['date'] = datetime.datetime.strptime("%s" % data['date'], "%Y-%m-%d").date()
+		return data
 
 class PriceMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):

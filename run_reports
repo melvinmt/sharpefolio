@@ -50,6 +50,6 @@ for report in reports_collection.loop():
 		else:
 			value = ratio.sortino()
 
-		print 'generating report %d for %s (%s): %f' % (report.id, stock.symbol, report.date, value)
+		print 'calculating %s ratio %d for %s (%s - %d weeks): %f' % (report.formula, report.id, stock.symbol, report.date, report.duration, value)
 		ratio_entry = reports.Ratio(stock.id, report.id, value)
 		ratio_mapper.insert(ratio_entry)

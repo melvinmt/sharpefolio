@@ -10,9 +10,9 @@ class Report(object):
 		self.formula = formula
 
 	def start_date(self):
-		start_date = self._date
+		start_date = self.date
 		weekdays = 0;
-		while weekdays < self._duration:
+		while weekdays < self.duration:
 			start_date -= datetime.timedelta(days=1)
 			if start_date.weekday() < 5:
 				weekdays += 1
@@ -58,6 +58,9 @@ class RatioMapper(dm.Mapper):
 	def insert(self, model):
 		self._repository.insert(model)
 
+	def find_highest_ratio(self, report_id, limit = 10):
+		return self._repository.find_highest_ratio(report_id, limit)
+
 class RatioSqliteRepository(dm.SqliteRepository):
 	def insert(self, model):
 		self._database.execute('\
@@ -79,6 +82,11 @@ class RatioMysqlRepository(dm.MysqlRepository):
 		)
 		self._database.commit()
 
+	def find_highest_ratio(self, report_id, limit):
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute('SELECT * FROM `ratios` WHERE report_id = report_id ORDER BY ratio DESC LIMIT %s', limit)
+		return dm.Collection(Ratio, cursor)
+
 class Recipe(object):
 	def __init__(self, report_id, n_stocks=4, check_correlation=False, distribution='even', id=None):
 		self.id = id
@@ -86,6 +94,9 @@ class Recipe(object):
 		self.n_stocks = n_stocks
 		self.check_correlation = check_correlation
 		self.distribution = distribution
+
+	def __str__(self):
+		return "%d %d %d %s" % (self.report_id, self.n_stocks, self.check_correlation, self.distribution)
 
 class RecipeMapper(dm.Mapper):
 	def insert(self, model):

@@ -26,11 +26,21 @@ class Ratio(object):
 		standard deviation of negative returns into account
 		'''
 		adj_ret = [a - b for a, b in zip(self.ret, self.b_ret)]
-		neg_ret = [a for a in adj_ret if a < 0]
+		avg_ret = np.mean(adj_ret)
 
-		neg_std = np.std(neg_ret)
+		# Take all negative returns.
+		neg_ret = [a ** 2 for a in adj_ret if a < 0]
+		# Sum it.
+		neg_ret_sum = np.sum(neg_ret)
+		# And calculate downside risk as second order lower partial moment.
+		down_risk = np.sqrt(neg_ret_sum / self.n)
 
-		return self._get_info_ratio(adj_ret, neg_std)
+		if down_risk > 0.0001:
+			sortino = avg_ret / down_risk
+		else:
+			sortino = 0
+
+		return sortino
 
 	def _get_info_ratio(self, ret, std):
 
@@ -115,4 +125,3 @@ class InvertedCorrelationPicker(object):
 		picks = [symbols[i] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
 
 		return picks
-

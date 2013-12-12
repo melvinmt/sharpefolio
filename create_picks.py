@@ -44,44 +44,38 @@ combos = {
 			'distribution': ['even', 'ratio']
 		}
 
-def recipes_for_combos(combos):
+def recipes_for_combos(combos, report):
 	recipes = []
 	for n_stocks in combos['n_stocks']:
 		for check_correlation in combos['n_stocks']:
 			for distribution in combos['distribution']:
 				recipe = reports.Recipe(report.id, n_stocks, check_correlation, distribution)
 				recipes.append(recipe)
-
-	print recipes
-
 	return recipes
 
-recipes_for_combos(combos)
-sys.exit()
 
-def picks_with_least_correlation(recipe):
+def picks_with_least_correlation(recipe, report):
 
-	picks = []
+	top_ratios = ratio_mapper.find_highest_ratio(recipe.report_id, recipe.n_stocks)
 
-	# Retrieve top stocks with highest ratio
-	stocks = {"AAPL": [], "AMZN": []}
+	stocks = [stock_mapper.find_by_stock_id(ratio.stock_id) for ratio in top_ratios]
 
-	# Retrieve prices for report
-	for symbol in stocks.keys():
-		prices_collection = price_mapper.find_by_stock_id_in_range(symbol, start_date, end_date)
-		stocks[symbol]["%04d-%02d-%02d" % (price.year, price.month, price.day)] = [price.closing_price for price in prices_collection]
+	stock_prices = {}
+	for stock in stocks:
+		stock_prices[stock.symbol] = price_mapper.find_by_stock_id_in_range(stock.id, report.start_date, report.end_date)
 
-	# date = start_date
-	# while True:
-	# 	date += timedelta(days=1)
-	# 	if date > end_date:
-	# 		break
+	picks = calc.InvertedCorrelationPicker(stock_prices)
 
 	return picks
 
-def picks_with_highest_ratio(recipe):
+def picks_with_highest_ratio(report, recipe):
 
 	picks = []
+
+	highest_ratios = ratio_mapper.find_highest_ratio(report.id)
+
+	for ratio in highest_ratios:
+		print ratio.ratio
 
 	return picks
 
@@ -108,19 +102,29 @@ def calc_gain_for_date(stock, today):
 
 	return gain
 
+print reports_collection
+
 for report in reports_collection:
 
-	start_date = date(report.year, report.month, report.day)
+	print "report", report
+
+	start_date = date(report.date.year, report.date.month, report.date.day)
 	end_date   = start_date + timedelta(days=report.duration)
 
-	for recipe in recipes_for_combos(combos):
-		recipe_mapper.insert(recipe)
+	for recipe in recipes_for_combos(combos, report):
+		# recipe_mapper.insert(recipe)
 
 		# Check correlation of stocks
-		if recipe.check_correlation == True:
-			picks = picks_with_least_correlation(recipe)
-		else:
-			picks = picks_with_highest_ratio(recipe)
+		# if recipe.check_correlation == True:
+		# 	picks = picks_with_least_correlation(recipe)
+		# else:
+		# 	picks = picks_with_highest_ratio(recipe)
+
+		picks = picks_with_highest_ratio(report, recipe)
+
+		print "picks:", picks
+
+		sys.exit()
 
 		# Distribute stocks
 		if recipe.distribution == 'ratio':

@@ -15,6 +15,9 @@ class StockMapper(dm.Mapper):
 	def find_by_symbol(self, symbol):
 		return self._repository.find_by_symbol(symbol)
 
+	def find_by_id(self, id):
+		return self._repository.find_by_id(id)
+
 	def find_all(self):
 		return self._repository.find_all()
 
@@ -25,6 +28,11 @@ class StockSqliteRepository(dm.SqliteRepository):
 
 	def find_by_symbol(self, symbol):
 		cursor = self._database.execute('SELECT * FROM `stocks` WHERE `symbol` = ? LIMIT 1', (symbol,))
+		result = cursor.fetchone()
+		return Stock(**result)
+
+	def find_by_id(self, id):
+		cursor = self._database.execute('SELECT * FROM `stocks` WHERE `id` = ? LIMIT 1', (id,))
 		result = cursor.fetchone()
 		return Stock(**result)
 
@@ -52,6 +60,12 @@ class StockMysqlRepository(dm.MysqlRepository):
 	def find_by_symbol(self, symbol):
 		cursor = self._database.cursor()
 		cursor.execute('SELECT * FROM `stocks` WHERE `symbol` = %s LIMIT 1', (symbol,))
+		result = cursor.fetchone()
+		return Stock(**result)
+
+	def find_by_id(self, id):
+		cursor = self._database.cursor()
+		cursor.execute('SELECT * FROM `stocks` WHERE `id` = %s LIMIT 1', (id,))
 		result = cursor.fetchone()
 		return Stock(**result)
 

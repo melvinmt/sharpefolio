@@ -4,6 +4,9 @@ class Collection:
 		self._ModelType = ModelType
 		self._datamap = datamap
 
+	def __iter__(self):
+		return self.loop()
+
 	def loop(self):
 		for model in self._models:
 			yield self.build_model(model)

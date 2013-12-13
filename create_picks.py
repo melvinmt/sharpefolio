@@ -54,28 +54,29 @@ def recipes_for_combos(combos, report):
 	return recipes
 
 
-def picks_with_least_correlation(recipe, report):
+def picks_with_least_correlation(report, recipe):
+
+	start_date = date(report.date.year, report.date.month, report.date.day)
+	end_date = start_date + timedelta(days=report.duration)
 
 	top_ratios = ratio_mapper.find_highest_ratio(recipe.report_id, recipe.n_stocks)
 
-	stocks = [stock_mapper.find_by_stock_id(ratio.stock_id) for ratio in top_ratios]
+	stocks = [stock_mapper.find_by_id(ratio.stock_id) for ratio in top_ratios]
 
 	stock_prices = {}
 	for stock in stocks:
-		stock_prices[stock.symbol] = price_mapper.find_by_stock_id_in_range(stock.id, report.start_date, report.end_date)
+		stock_prices[stock.symbol] = price_mapper.find_by_stock_id_in_range(stock.id, start_date, end_date)
 
-	picks = calc.InvertedCorrelationPicker(stock_prices)
-
-	return picks
+	picker = calc.InvertedCorrelationPicker(stock_prices)
+	return picker.pick(recipe.n_stocks)
 
 def picks_with_highest_ratio(report, recipe):
 
 	picks = []
 
-	highest_ratios = ratio_mapper.find_highest_ratio(report.id)
+	highest_ratios = ratio_mapper.find_highest_ratio(report.id, recipe.n_stocks)
 
-	for ratio in highest_ratios:
-		print ratio.ratio
+	picks = [stock_mapper.find_by_id(ratio.stock_id).symbol for ratio in highest_ratios]
 
 	return picks
 
@@ -102,11 +103,7 @@ def calc_gain_for_date(stock, today):
 
 	return gain
 
-print reports_collection
-
 for report in reports_collection:
-
-	print "report", report
 
 	start_date = date(report.date.year, report.date.month, report.date.day)
 	end_date   = start_date + timedelta(days=report.duration)
@@ -122,7 +119,11 @@ for report in reports_collection:
 
 		picks = picks_with_highest_ratio(report, recipe)
 
-		print "picks:", picks
+		print "highest ratio picks:", picks
+
+		picks = picks_with_least_correlation(report, recipe)
+
+		print "least correlation picks:", picks
 
 		sys.exit()
 

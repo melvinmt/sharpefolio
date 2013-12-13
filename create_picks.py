@@ -44,7 +44,7 @@ combos = {
 			'distribution': ['even', 'ratio']
 		}
 
-def recipes_for_combos(combos, report):
+def recipe_combos(combos, report):
 	recipes = []
 	for n_stocks in combos['n_stocks']:
 		for check_correlation in combos['n_stocks']:
@@ -53,75 +53,69 @@ def recipes_for_combos(combos, report):
 				recipes.append(recipe)
 	return recipes
 
+class Picker:
 
-def picks_with_least_correlation(report, recipe):
+	def __init__(self, report, recipe):
+		self.report = report
+		self.recipe = recipe
 
-	start_date = date(report.date.year, report.date.month, report.date.day)
-	end_date = start_date + timedelta(days=report.duration)
+		self.start_date = date(self.report.date.year, self.report.date.month, self.report.date.day)
+		self.end_date = self.start_date + timedelta(days=self.report.duration)
 
-	top_ratios = ratio_mapper.find_highest_ratio(recipe.report_id, recipe.n_stocks)
+	def _picks_with_least_correlation(self):
+		top_ratios = ratio_mapper.find_highest_ratio(self.recipe.report_id, self.recipe.n_stocks)
 
-	stocks = [stock_mapper.find_by_id(ratio.stock_id) for ratio in top_ratios]
+		stocks = [stock_mapper.find_by_id(ratio.stock_id) for ratio in top_ratios]
 
-	stock_prices = {}
-	for stock in stocks:
-		stock_prices[stock.symbol] = price_mapper.find_by_stock_id_in_range(stock.id, start_date, end_date)
+		stock_prices = {}
+		for stock in stocks:
+			stock_prices[stock.symbol] = price_mapper.find_by_stock_id_in_range(stock.id, self.start_date, self.end_date)
 
-	picker = calc.InvertedCorrelationPicker(stock_prices)
-	return picker.pick(recipe.n_stocks)
+		picker = calc.InvertedCorrelationPicker(stock_prices)
+		return picker.pick(self.recipe.n_stocks)
 
-def picks_with_highest_ratio(report, recipe):
+	def _picks_with_highest_ratio(self):
+		highest_ratios = ratio_mapper.find_highest_ratio(self.report.id, self.recipe.n_stocks)
 
-	picks = []
+		picks = [stock_mapper.find_by_id(ratio.stock_id).symbol for ratio in highest_ratios]
 
-	highest_ratios = ratio_mapper.find_highest_ratio(report.id, recipe.n_stocks)
+		return picks
 
-	picks = [stock_mapper.find_by_id(ratio.stock_id).symbol for ratio in highest_ratios]
+	def _distribute_picks_evenly(self, picks):
 
-	return picks
+		picks = []
 
-def distribute_picks_evenly(picks):
+		return picks
 
-	picks = []
+	def _distribute_picks_by_ratio(self, picks):
 
-	return picks
+		picks = []
 
+		return picks
 
-def distribute_picks_by_ratio(picks):
+	def _calc_gain_for_date(self, stock):
 
-	picks = []
+		today = self.start_date
+		price_today = price_mapper.find_by_stock_id_in_range(stock.id, start_date=today, end_date=today)
+		yesterday = today - timedelta(days=1)
+		price_yesterday = price_mapper.find_by_stock_id_in_range(stock.id, start_date=yesterday, end_date=yesterday)
 
-	return picks
+		gain = price_today - price_yesterday
 
-def calc_gain_for_date(stock, today):
+		return gain
 
-	price_today = price_mapper.find_by_stock_id_in_range(stock.id, start_date=today, end_date=today)
-	yesterday = today - timedelta(days=1)
-	price_yesterday = price_mapper.find_by_stock_id_in_range(stock.id, start_date=yesterday, end_date=yesterday)
-
-	gain = price_today - price_yesterday
-
-	return gain
-
-for report in reports_collection:
-
-	start_date = date(report.date.year, report.date.month, report.date.day)
-	end_date   = start_date + timedelta(days=report.duration)
-
-	for recipe in recipes_for_combos(combos, report):
-		# recipe_mapper.insert(recipe)
-
+	def get_picks(self):
 		# Check correlation of stocks
-		# if recipe.check_correlation == True:
-		# 	picks = picks_with_least_correlation(recipe)
+		# if self.recipe.check_correlation == True:
+		# 	picks = self._picks_with_least_correlation()
 		# else:
-		# 	picks = picks_with_highest_ratio(recipe)
+		# 	picks = self._picks_with_highest_ratio()
 
-		picks = picks_with_highest_ratio(report, recipe)
+		picks = self._picks_with_highest_ratio()
 
 		print "highest ratio picks:", picks
 
-		picks = picks_with_least_correlation(report, recipe)
+		picks = self._picks_with_least_correlation()
 
 		print "least correlation picks:", picks
 
@@ -129,17 +123,25 @@ for report in reports_collection:
 
 		# Distribute stocks
 		if recipe.distribution == 'ratio':
-			picks = distribute_picks_by_ratio(picks)
+			picks = self._distribute_picks_by_ratio(picks)
 		else:
-			picks = distribute_picks_evenly(picks)
+			picks = self._distribute_picks_evenly(picks)
 
 		# Store picks in DB
 		for symbol in picks.keys():
 			stock = stock_mapper.find_by_symbol(symbol)
 			
-			gain = calc_gain_for_date(stock, start_date)
+			gain = self._calc_gain_for_date(stock)
 			weight = picks[symbol]
 
-			pick = reports.Pick(recipe.id, stock.id, gain, weight)
+			pick = reports.Pick(self.recipe.id, stock.id, gain, weight)
 			pick_mapper.insert(pick)
 
+for report in reports_collection:
+
+	for recipe in recipe_combos(combos, report):
+
+		picker = Picker(report, recipe)
+
+		picker.get_picks()
+		# recipe_mapper.insert(recipe)

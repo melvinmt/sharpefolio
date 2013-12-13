@@ -78,8 +78,9 @@ class InvertedCorrelationPicker(object):
 				 }
 		picker = InvertedCorrelationPicker(stocks)
 		'''
-
-		self.stocks = stocks
+		self.stocks = {}
+		for symbol in stocks.keys():
+			self.stocks[symbol] = [price.closing_price for price in stocks[symbol]]
 
 	def pick(self, portfolio_size=4):
 
@@ -93,8 +94,9 @@ class InvertedCorrelationPicker(object):
 
 		# Determine depth of matrix
 		for symbol in symbols:
-			if len(self.stocks[symbol]) > price_len:
-				price_len = len(self.stocks[symbol])
+			length = len(self.stocks[symbol])
+			if length > price_len:
+				price_len = length
 
 		if portfolio_size > price_len:
 			# Pick everything!

@@ -8,6 +8,9 @@ The Sharpefolio engine can analyze thousands of stocks and suggests a portfolio 
 
 The ratios tell us whether a portfolio's returns are due to smart investment decisions or a result of excess risk. This measurement is very useful because although one portfolio can reap higher returns than its peers, it is only a good investment if those higher returns do not come with too much additional risk. The greater a portfolio's Sharpe/Sortino ratio, the better its risk-adjusted performance has been. 
 
+![Low Sharpe Ratio](https://s3-us-west-1.amazonaws.com/melvinmt/LowSharpeRatio.png)
+![High Sharpe Ratio](https://s3-us-west-1.amazonaws.com/melvinmt/HighSharpeRatio.png)
+
 However, one can't just simply pick the stocks with the highest individual ratios. The portfolio needs to balanced by picking the stocks that have the least correlation with each other to reduce the risk of negative macro-economic changes. A portfolio with stocks that have a high individual  ratio and a low correlation between each stock therefore has a high Sharpe/Sortino ratio overall. 
 
 ## What's a Sharpe/Sortino?

@@ -92,6 +92,9 @@ class PriceMapper(dm.Mapper):
 	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
 		return self._repository.find_by_stock_id_in_range(stock_id, start_date, end_date)
 
+	def find_by_stock_id_until_day(self, stock_id, until_date, limit=100000000):
+		return self._repository.find_by_stock_id_until_day(stock_id, until_date, limit)
+
 class PriceSqliteRepository(dm.SqliteRepository):
 	def insert(self, model):
 		self._database.execute('\
@@ -168,3 +171,16 @@ class PriceMysqlRepository(dm.MysqlRepository):
 			ORDER BY `date` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
 		)
 		return dm.Collection(Price, cursor)
+
+	def find_by_stock_id_until_day(self, stock_id, until_date, limit):
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute("\
+			SELECT *\
+			FROM `prices`\
+			WHERE `stock_id` = %s\
+			AND `date` <= %s\
+			ORDER BY `date` DESC\
+			LIMIT %s", (stock_id, until_date.isoformat(), limit)
+		)
+		return dm.Collection(Price, cursor)
+

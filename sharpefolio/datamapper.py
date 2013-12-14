@@ -3,13 +3,18 @@ class Collection:
 		self._models = models
 		self._ModelType = ModelType
 		self._datamap = datamap
+		self.i = 0
 
 	def __iter__(self):
 		return self.loop()
 
 	def loop(self):
 		for model in self._models:
+			self.i += 1
 			yield self.build_model(model)
+
+	def next(self):
+		return self.build_model(self._models.fetchone())
 
 	def build_model(self, data):
 		if self._datamap != None:

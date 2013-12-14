@@ -104,10 +104,11 @@ class RecipeMapper(dm.Mapper):
 
 class RecipeMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
-		self._database.execute('\
+		cursor = self._database.cursor()
+		cursor.execute('\
 			INSERT INTO `recipes`\
 			(`report_id`, `n_stocks`, `check_correlation`, `distribution`)\
-			VALUES(?, ?, ?, ?)',
+			VALUES(%s, %s, %s, %s)',
 			(model.report_id, model.n_stocks, model.check_correlation, model.distribution)
 		)
 		self._database.commit()
@@ -126,10 +127,11 @@ class PickMapper(dm.Mapper):
 
 class PickMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
-		self._database.execute('\
+		cursor = self._database.cursor()
+		cursor.execute('\
 			INSERT INTO `picks`\
 			(`recipe_id`, `stock_id`, `gain`, `weight`)\
-			VALUES(?, ?, ?, ?)',
+			VALUES(%s, %s, %s, %s)',
 			(model.recipe_id, model.stock_id, model.gain, model.weight)
 		)
 		self._database.commit()

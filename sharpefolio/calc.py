@@ -90,23 +90,23 @@ class InvertedCorrelationPicker(object):
 
 		price_len = 0
 		stocks_len = len(self.stocks)
-		symbols = [symbol for symbol in self.stocks.keys()]
+		ids = [id for id in self.stocks.keys()]
 
 		# Determine depth of matrix
-		for symbol in symbols:
+		for symbol in ids:
 			length = len(self.stocks[symbol])
 			if length > price_len:
 				price_len = length
 
 		if portfolio_size > price_len:
 			# Pick everything!
-			return symbols
+			return ids
 
 		# Create an empty datastructure to hold the daily returns
 		cov_data = np.zeros((price_len, stocks_len))
 
 		# Grab the daily returns for those stocks and put them in cov index
-		for i, symbol in enumerate(symbols):
+		for i, symbol in enumerate(ids):
 			prices = self.stocks[symbol]
 			# n = len(prices)
 			# if n < price_len:
@@ -124,6 +124,6 @@ class InvertedCorrelationPicker(object):
 		total_corr = [sum([cormat[x[0]][x[1]] for x in combinations(p, 2)]) for p in portfolios]
 
 		# Find the portfolio with the smallest sum of correlations
-		picks = [symbols[i] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
+		picks = [ids[i] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
 
 		return picks

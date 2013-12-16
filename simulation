@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+import MySQLdb
+from datetime import date, timedelta
+
+database = MySQLdb.connect(
+	host="127.0.0.1",
+	user="vagrant",
+	passwd="vagrant",
+	db="sharpefolio"
+)
+
+top_return = [0, 0]
+
+for x in xrange(240):
+
+	start_date = date(2013, 01, 01)
+	end_date = date(2013, 11, 01)
+	i = x + 1
+	days = 0
+	current_return = 1
+	last_stocks = []
+	sum_diff = 0
+	while start_date < end_date:
+		if start_date.weekday() < 5:
+			start_date += timedelta(days=1)
+			continue
+		cursor = database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute('select * from picks\
+		 inner join reports on reports.id = picks.report_id\
+		 join recipes on recipes.id = picks.recipe_id\
+		 where recipe_id = %s\
+		 and reports.duration = recipes.report_duration\
+		 and reports.date = %s\
+		 and reports.formula = recipes.report_formula', (i, start_date))
+		change = 0
+		
+		these_stocks = []
+		for row in cursor:
+			# print "gain:", row["gain"], "weight:", row["weight"]
+			change += row["gain"] * row["weight"]
+			these_stocks.append(row["stock_id"])
+
+		diff = [a for a in set(these_stocks) if a not in set(last_stocks)]
+
+		sum_diff += len(diff)
+
+		last_stocks = these_stocks
+
+		current_return *= 1 + (change/100)
+		start_date += timedelta(days=1)
+
+	if current_return > top_return[1]:
+		top_return = [i, current_return]
+
+	print "ID:", i, "Return:", current_return, "Change:", current_return - 1, "diffs:", sum_diff
+
+print "top return is:", top_return

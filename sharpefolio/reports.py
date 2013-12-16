@@ -26,6 +26,14 @@ class ReportMapper(dm.Mapper):
 	def find_all(self):
 		return self._repository.find_all()
 
+	def find_until_date(self, until_date):
+		return self._repository.find_until_date(until_date)
+
+	def find_until_date_with_duration_and_formula(self, until_date, duration, formula):
+		return self._repository.find_until_date_with_duration_and_formula(
+			until_date, duration, formula
+		)
+
 class ReportMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
 		cursor = self._database.cursor()
@@ -36,11 +44,23 @@ class ReportMysqlRepository(dm.MysqlRepository):
 			(model.date, model.duration, model.formula)
 		)
 		self._database.commit()
-		model._id = cursor.lastrowid
+		model.id = cursor.lastrowid
 
 	def find_all(self):
 		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
 		cursor.execute('SELECT * FROM `reports`')
+		return dm.Collection(Report, cursor, self._datamap)
+
+	def find_until_date(self, until_date):
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute('SELECT * FROM `reports` WHERE date <= %s', (until_date,))
+		return dm.Collection(Report, cursor, self._datamap)
+
+	def find_until_date_with_duration_and_formula(self, until_date, duration, formula):
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute('SELECT * FROM `reports` WHERE date <= %s AND duration = %s AND formula = %s', 
+			(until_date, duration, formula)
+		)
 		return dm.Collection(Report, cursor, self._datamap)
 
 	def _datamap(self, data):
@@ -49,27 +69,20 @@ class ReportMysqlRepository(dm.MysqlRepository):
 
 class Ratio(object):
 	def __init__(self, stock_id, report_id, ratio, id = None):
-		self._id = id
+		self.id = id
 		self.stock_id = stock_id
 		self.report_id = report_id
 		self.ratio = ratio
+
+	def __str__(self):
+		return "stock_id: %d report_id: %d ratio: %d" % (self.stock_id, self.report_id, self.ratio)
 
 class RatioMapper(dm.Mapper):
 	def insert(self, model):
 		self._repository.insert(model)
 
-	def find_highest_ratio(self, report_id, limit = 10):
+	def find_highest_ratio(self, report_id, limit):
 		return self._repository.find_highest_ratio(report_id, limit)
-
-class RatioSqliteRepository(dm.SqliteRepository):
-	def insert(self, model):
-		self._database.execute('\
-			INSERT INTO `ratios`\
-			(`stock_id`, `report_id`, `ratio`)\
-			VALUES(?, ?, ?)',
-			(model.stock_id, model.report_id, model.ratio)
-		)
-		self._database.commit()
 
 class RatioMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
@@ -88,15 +101,13 @@ class RatioMysqlRepository(dm.MysqlRepository):
 		return dm.Collection(Ratio, cursor)
 
 class Recipe(object):
-	def __init__(self, report_id, n_stocks=4, check_correlation=False, distribution='even', id=None):
+	def __init__(self, report_formula, report_duration, n_stocks=4, check_correlation=False, distribution='even', id=None):
 		self.id = id
-		self.report_id = report_id
 		self.n_stocks = n_stocks
 		self.check_correlation = check_correlation
 		self.distribution = distribution
-
-	def __str__(self):
-		return "%d %d %d %s" % (self.report_id, self.n_stocks, self.check_correlation, self.distribution)
+		self.report_formula = report_formula
+		self.report_duration = report_duration
 
 class RecipeMapper(dm.Mapper):
 	def insert(self, model):
@@ -107,15 +118,17 @@ class RecipeMysqlRepository(dm.MysqlRepository):
 		cursor = self._database.cursor()
 		cursor.execute('\
 			INSERT INTO `recipes`\
-			(`report_id`, `n_stocks`, `check_correlation`, `distribution`)\
-			VALUES(%s, %s, %s, %s)',
-			(model.report_id, model.n_stocks, model.check_correlation, model.distribution)
+			(`n_stocks`, `check_correlation`, `distribution`,`report_duration`, `report_formula`)\
+			VALUES(%s, %s, %s, %s, %s)',
+			(model.n_stocks, int(model.check_correlation), model.distribution, model.report_duration, model.report_formula)
 		)
 		self._database.commit()
+		model.id = cursor.lastrowid
 
 class Pick(object):
-	def __init__(self, recipe_id, stock_id, gain, weight, id=None):
+	def __init__(self, recipe_id, report_id, stock_id, gain, weight, id=None):
 		self.id = id
+		self.report_id = report_id
 		self.recipe_id = recipe_id
 		self.stock_id = stock_id
 		self.gain = gain
@@ -130,8 +143,9 @@ class PickMysqlRepository(dm.MysqlRepository):
 		cursor = self._database.cursor()
 		cursor.execute('\
 			INSERT INTO `picks`\
-			(`recipe_id`, `stock_id`, `gain`, `weight`)\
-			VALUES(%s, %s, %s, %s)',
-			(model.recipe_id, model.stock_id, model.gain, model.weight)
+			(`recipe_id`, `report_id`, `stock_id`, `gain`, `weight`)\
+			VALUES(%s, %s, %s, %s, %s)',
+			(model.recipe_id, model.report_id, model.stock_id, model.gain, model.weight)
 		)
 		self._database.commit()
+		model.id = cursor.lastrowid

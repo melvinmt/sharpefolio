@@ -1,5 +1,4 @@
 import MySQLdb
-import datetime
 import datamapper as dm
 
 class Stock(object):
@@ -20,25 +19,6 @@ class StockMapper(dm.Mapper):
 
 	def find_all(self):
 		return self._repository.find_all()
-
-class StockSqliteRepository(dm.SqliteRepository):
-	def insert(self, model):
-		self._database.execute('INSERT INTO `stocks` (`symbol`, `company`) VALUES(?, ?)', (model.symbol, model.company))
-		self._database.commit()
-
-	def find_by_symbol(self, symbol):
-		cursor = self._database.execute('SELECT * FROM `stocks` WHERE `symbol` = ? LIMIT 1', (symbol,))
-		result = cursor.fetchone()
-		return Stock(**result)
-
-	def find_by_id(self, id):
-		cursor = self._database.execute('SELECT * FROM `stocks` WHERE `id` = ? LIMIT 1', (id,))
-		result = cursor.fetchone()
-		return Stock(**result)
-
-	def find_all(self):
-		cursor = self._database.execute('SELECT * FROM `stocks`')
-		return dm.Collection(Stock, cursor)
 
 class StockMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
@@ -95,38 +75,8 @@ class PriceMapper(dm.Mapper):
 	def find_by_stock_id_until_day(self, stock_id, until_date, limit=100000000):
 		return self._repository.find_by_stock_id_until_day(stock_id, until_date, limit)
 
-class PriceSqliteRepository(dm.SqliteRepository):
-	def insert(self, model):
-		self._database.execute('\
-			INSERT INTO `prices`\
-			(`stock_id`, `year`, `month`, `day`, `closing_price`, `change`)\
-			VALUES(?, ?, ?, ?, ?, ?)',
-			(model.stock_id, model.year, model.month, model.day, model.closing_price, model.change)
-		)
-		self._database.commit()
-
-	def find_by_stock_id(self, stock_id):
-		cursor = self._database.cursor()
-		cursor.execute("\
-			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `date`\
-			FROM `prices`\
-			WHERE `stock_id` = ? ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id,))
-		return dm.Collection(Price, cursor, self._datamap)
-
-	def find_by_stock_id_in_range(self, stock_id, start_date, end_date):
-		cursor = self._database.execute("\
-			SELECT *, date(year || '-' || substr('00' || month, -2, 2) || '-' || substr('00' || day, -2, 2)) as `date`\
-			FROM `prices`\
-			WHERE `stock_id` = ?\
-			AND `date` >= date(?)\
-			AND `date` <= date(?)\
-			ORDER BY `year` ASC, `month` ASC, `day` ASC", (stock_id, start_date.isoformat(), end_date.isoformat())
-		)
-		return dm.Collection(Price, cursor, self._datamap)
-
-	def _datamap(self, data):
-		data['date'] = datetime.datetime.strptime("%s" % data['date'], "%Y-%m-%d").date()
-		return data
+	def find_last_date(self):
+		return self._repository.find_last_date()
 
 class PriceMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
@@ -183,4 +133,15 @@ class PriceMysqlRepository(dm.MysqlRepository):
 			LIMIT %s", (stock_id, until_date.isoformat(), limit)
 		)
 		return dm.Collection(Price, cursor)
+
+	def find_last_date(self):
+		cursor = self._database.cursor()
+		cursor.execute("\
+			SELECT *\
+			FROM `prices`\
+			ORDER BY `date` DESC\
+			LIMIT 1"
+		)
+		result = cursor.fetchone()
+		return result[2]
 

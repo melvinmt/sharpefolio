@@ -72,15 +72,53 @@ class InvertedCorrelationPicker(object):
 				  "LNKD": [-0.23, -0.24, -0.25, -0.26],
 				  "ZNGA": [0.23, 0.24, 0.25, 0.26],
 				  "GRPN": [0.3, 0.29, 0.4, 0.23],
-				  "IBM" : [0.23, 0.24, 0.25, 0.26],
+				  "IBM" : [0.23, 0.25, 0.26],
 				  "MSFT": [0.23, 0.24, 0.25, 0.26],
 				  "GOOG": [0.23, 0.24, 0.25, 0.26],
 				 }
 		picker = InvertedCorrelationPicker(stocks)
 		'''
-		self.stocks = {}
+		self.dates = {}
+		max_date_len = 0
+		max_date_symbol = ""
 		for symbol in stocks.keys():
-			self.stocks[symbol] = [price.closing_price for price in stocks[symbol]]
+			self.dates[symbol] = [price.date for price in stocks[symbol]]
+			date_len = len(self.dates[symbol])
+			if date_len > max_date_len:
+				max_date_len = date_len
+				max_date_symbol = symbol
+
+		self.stocks = {}
+		for i, date in enumerate(self.dates[max_date_symbol]):
+			for symbol in stocks.keys():
+				if self.stocks.has_key(symbol) is False:
+					self.stocks[symbol] = []
+
+				insert_price = None
+				for price in stocks[symbol]:
+					if price.date == date:
+						insert_price = price.closing_price
+						break
+
+				self.stocks[symbol].append(insert_price)
+
+		# backward fill
+		for symbol in self.stocks.keys():
+			last_price = None
+			for i, price in enumerate(self.stocks[symbol]):
+				if price != None:
+					last_price = price
+				else:
+					self.stocks[symbol][i] = last_price
+
+		# forward fill
+		for symbol in self.stocks.keys():
+			last_price = None
+			for i, price in reversed(list(enumerate(self.stocks[symbol]))):
+				if price != None:
+					last_price = price
+				else:
+					self.stocks[symbol][i] = last_price
 
 	def pick(self, portfolio_size=4):
 

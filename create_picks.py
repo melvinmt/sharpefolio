@@ -36,21 +36,24 @@ pick_mapper = reports.PickMapper(pick_repository)
 recipe_repository = reports.RecipeMysqlRepository(connection)
 recipe_mapper = reports.RecipeMapper(recipe_repository)
 
-reports_collection = report_mapper.find_all()
-
 combos = {
 			'n_stocks': [4, 5, 6, 7, 8],
 			'check_correlation': [True, False],
-			'distribution': ['even', 'ratio']
+			'distribution': ['even', 'ratio'],
+			'report_duration': [5, 10, 15, 20, 25, 30],
+			'report_formula': ['sharpe-v1.0-beta', 'sortino-v1.0-beta']
 		}
 
-def recipe_combos(combos, report):
+def recipe_combos(combos):
 	recipes = []
 	for n_stocks in combos['n_stocks']:
-		for check_correlation in combos['n_stocks']:
+		for check_correlation in combos['check_correlation']:
 			for distribution in combos['distribution']:
-				recipe = reports.Recipe(report.id, n_stocks, check_correlation, distribution)
-				recipes.append(recipe)
+				for report_duration in combos['report_duration']:
+					for report_formula in combos['report_formula']:
+						recipe = reports.Recipe(report_formula, report_duration, n_stocks, check_correlation, distribution)
+						recipes.append(recipe)
+						recipe_mapper.insert(recipe)
 	return recipes
 
 class Picker:
@@ -59,11 +62,12 @@ class Picker:
 		self.report = report
 		self.recipe = recipe
 
-		self.start_date = date(self.report.date.year, self.report.date.month, self.report.date.day)
-		self.end_date = self.start_date + timedelta(days=self.report.duration)
+		self.start_date = report.start_date()
+		self.end_date = date(self.report.date.year, self.report.date.month, self.report.date.day)
 
 	def _picks_with_least_correlation(self):
-		top_ratios = ratio_mapper.find_highest_ratio(self.recipe.report_id, self.recipe.n_stocks)
+
+		top_ratios = ratio_mapper.find_highest_ratio(self.report.id, self.recipe.n_stocks)
 
 		stock_prices = {}
 		for ratio in top_ratios:
@@ -120,7 +124,7 @@ class Picker:
 		price_today = prices.next()
 		price_yesterday = prices.next()
 
-		gain = price_today.closing_price - price_yesterday.closing_price
+		gain = ((price_today.closing_price / price_yesterday.closing_price) - 1) * 100
 
 		return gain
 
@@ -131,7 +135,7 @@ class Picker:
 		else:
 			picks = self._picks_with_highest_ratio()
 
-		# Distribute stocks
+		# Distribute stock_prices
 		if recipe.distribution == 'ratio':
 			dist = self._distribute_picks_by_ratio(picks)
 		else:
@@ -144,16 +148,20 @@ class Picker:
 			gain = self._calc_gain(stock)
 			weight = dist[symbol]
 
-			print "recipe_id:", self.recipe.id, "stock_id:", stock.id, "gain:", gain, "weight:", weight
+			print "recipe_id:", self.recipe.id, "report_id:", report.id,  "stock_id:", stock.id, "gain:", gain, "weight:", weight
 
-			pick = reports.Pick(self.recipe.id, stock.id, gain, weight)
+			pick = reports.Pick(self.recipe.id, self.report.id, stock.id, gain, weight)
 			pick_mapper.insert(pick)
 
-for report in reports_collection:
+last_date = price_mapper.find_last_date()
 
-	for recipe in recipe_combos(combos, report):
+for recipe in recipe_combos(combos):
 
-		recipe_mapper.insert(recipe)
+	reports_collection = report_mapper.find_until_date_with_duration_and_formula(
+		last_date, recipe.report_duration, recipe.report_formula
+	)
+
+	for report in reports_collection:
 
 		picker = Picker(report, recipe)
 		picker.create_picks()

@@ -30,12 +30,14 @@ CREATE TABLE `ratios` (
   `ratio` double(10,6),
   PRIMARY KEY (`id`),
   UNIQUE KEY (`stock_id`, `report_id`),
-  KEY `ratio` (`ratio`)
+  KEY `ratio` (`ratio`),
+  KEY `report_id` (`report_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `picks` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `recipe_id` int(11) NOT NULL,
+  `report_id` int(11) NOT NULL,
   `stock_id` int(11) NOT NULL,
   `gain` double(10,6),
   `weight` double(10,6),
@@ -44,12 +46,13 @@ CREATE TABLE `picks` (
 
 CREATE TABLE `recipes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `recipe_id` int(11) NOT NULL,
   `n_stocks` int(11) NOT NULL,
   `check_correlation` tinyint(1) UNSIGNED NOT NULL,
-  `distribution` double(10,6),
-  PRIMARY KEY (`id`, `recipe_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+  `distribution` varchar(10),
+  `report_duration` int(11) NOT NULL,
+  `report_formula` varchar(30) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 ALTER TABLE `sharpefolio`.`prices`
 ADD UNIQUE INDEX `unique_price` (`stock_id` ASC, `date` ASC);

@@ -116,6 +116,11 @@ class RecipeMapper(dm.Mapper):
 class RecipeMysqlRepository(dm.MysqlRepository):
 	def insert(self, model):
 		cursor = self._database.cursor()
+		# q = '\
+		# 	INSERT INTO `recipes`\
+		# 	(`n_stocks`, `check_correlation`, `distribution`,`report_duration`, `report_formula`)\
+		# 	VALUES(%s, %s, %s, %s, %s)' % (model.n_stocks, int(model.check_correlation), model.distribution, model.report_duration, model.report_formula)
+		# print q
 		cursor.execute('\
 			INSERT INTO `recipes`\
 			(`n_stocks`, `check_correlation`, `distribution`,`report_duration`, `report_formula`)\

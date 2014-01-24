@@ -26,17 +26,26 @@ for x in xrange(240):
 			start_date += timedelta(days=1)
 			continue
 		cursor = database.cursor(MySQLdb.cursors.DictCursor)
+		q = 'select * from picks\
+		 inner join reports on reports.id = picks.report_id\
+		 inner join recipes on recipes.id = picks.recipe_id\
+		 where picks.recipe_id = %s\
+		 and reports.duration = recipes.report_duration\
+		 and reports.date = %s\
+		 and reports.formula = recipes.report_formula' % (i, start_date)
+		print "q:", q
 		cursor.execute('select * from picks\
 		 inner join reports on reports.id = picks.report_id\
-		 join recipes on recipes.id = picks.recipe_id\
-		 where recipe_id = %s\
+		 inner join recipes on recipes.id = picks.recipe_id\
+		 where picks.recipe_id = %s\
 		 and reports.duration = recipes.report_duration\
 		 and reports.date = %s\
 		 and reports.formula = recipes.report_formula', (i, start_date))
 		change = 0
-		
+
 		these_stocks = []
 		for row in cursor:
+			# print "row", row
 			# print "gain:", row["gain"], "weight:", row["weight"]
 			change += row["gain"] * row["weight"]
 			these_stocks.append(row["stock_id"])
@@ -49,6 +58,8 @@ for x in xrange(240):
 
 		current_return *= 1 + (change/100)
 		start_date += timedelta(days=1)
+		print "change:", change, "gain", row["gain"], "weight", row["weight"]
+		print "start_date", start_date, "current_return:", current_return
 
 	if current_return > top_return[1]:
 		top_return = [i, current_return]

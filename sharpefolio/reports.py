@@ -26,6 +26,9 @@ class ReportMapper(dm.Mapper):
 	def find_all(self):
 		return self._repository.find_all()
 
+	def find_within_date(self, since_date, until_date):
+		return self._repository.find_within_date(since_date, until_date)
+
 	def find_until_date(self, until_date):
 		return self._repository.find_until_date(until_date)
 
@@ -49,6 +52,11 @@ class ReportMysqlRepository(dm.MysqlRepository):
 	def find_all(self):
 		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
 		cursor.execute('SELECT * FROM `reports`')
+		return dm.Collection(Report, cursor, self._datamap)
+
+	def find_within_date(self, since_date, until_date):
+		cursor = self._database.cursor(MySQLdb.cursors.DictCursor)
+		cursor.execute('SELECT * FROM `reports` WHERE `date` >= %s AND `date` <= %s ORDER BY `date` DESC', (since_date, until_date))
 		return dm.Collection(Report, cursor, self._datamap)
 
 	def find_until_date(self, until_date):

@@ -117,17 +117,6 @@ class Picker:
 
 		return dist
 
-	def _calc_gain(self, stock):
-
-		prices = price_mapper.find_by_stock_id_until_day(stock.id, until_date=self.end_date, limit=2)
-
-		price_today = prices.next()
-		price_yesterday = prices.next()
-
-		gain = ((price_today.closing_price / price_yesterday.closing_price) - 1) * 100
-
-		return gain
-
 	def create_picks(self):
 		# Check correlation of stocks
 		if self.recipe.check_correlation == True:
@@ -144,13 +133,12 @@ class Picker:
 		# Store picks in DB
 		for symbol in picks.keys():
 			stock = stock_mapper.find_by_symbol(symbol)
-			
-			gain = self._calc_gain(stock)
+
 			weight = dist[symbol]
 
-			print "recipe_id:", self.recipe.id, "report_id:", report.id,  "stock_id:", stock.id, "gain:", gain, "weight:", weight
+			print "recipe_id:", self.recipe.id, "report_id:", report.id,  "stock_id:", stock.id, "weight:", weight
 
-			pick = reports.Pick(self.recipe.id, self.report.id, stock.id, gain, weight)
+			pick = reports.Pick(self.recipe.id, self.report.id, stock.id, weight)
 			pick_mapper.insert(pick)
 
 last_date = price_mapper.find_last_date()

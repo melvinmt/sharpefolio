@@ -23,7 +23,7 @@ http://en.wikipedia.org/wiki/Sortino_ratio
 
 ## DISCLAIMER
 
-Copyright (c) 2013, [Melvin Tercan](https://github.com/melvinmt), [Lorenzo Pisani](https://github.com/Zeelot)
+Copyright (c) 2013-2014, [Melvin Tercan](https://github.com/melvinmt), [Lorenzo Pisani](https://github.com/Zeelot)
 
 All rights reserved.
 

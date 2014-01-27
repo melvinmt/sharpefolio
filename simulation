@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 
 import MySQLdb
+from sharpefolio import stocks
 from datetime import date, timedelta
 
 database = MySQLdb.connect(
 	host="127.0.0.1",
-	user="vagrant",
-	passwd="vagrant",
+	user="root",
+	passwd="root",
 	db="sharpefolio"
 )
+
+price_repository = stocks.PriceMysqlRepository(database)
+price_mapper = stocks.PriceMapper(price_repository)
 
 top_return = [0, 0]
 
@@ -22,32 +26,48 @@ for x in xrange(240):
 	last_stocks = []
 	sum_diff = 0
 	while start_date < end_date:
-		if start_date.weekday() < 5:
+		if start_date.weekday() >= 5:
 			start_date += timedelta(days=1)
 			continue
 		cursor = database.cursor(MySQLdb.cursors.DictCursor)
 		q = 'select * from picks\
-		 inner join reports on reports.id = picks.report_id\
-		 inner join recipes on recipes.id = picks.recipe_id\
-		 where picks.recipe_id = %s\
-		 and reports.duration = recipes.report_duration\
-		 and reports.date = %s\
-		 and reports.formula = recipes.report_formula' % (i, start_date)
+ inner join reports on reports.id = picks.report_id\
+ inner join recipes on recipes.id = picks.recipe_id\
+ where picks.recipe_id = %s\
+ and reports.duration = recipes.report_duration\
+ and reports.date = %s\
+ and reports.formula = recipes.report_formula' % (i, start_date)
 		print "q:", q
 		cursor.execute('select * from picks\
-		 inner join reports on reports.id = picks.report_id\
-		 inner join recipes on recipes.id = picks.recipe_id\
-		 where picks.recipe_id = %s\
-		 and reports.duration = recipes.report_duration\
-		 and reports.date = %s\
-		 and reports.formula = recipes.report_formula', (i, start_date))
+ inner join reports on reports.id = picks.report_id\
+ inner join recipes on recipes.id = picks.recipe_id\
+ where picks.recipe_id = %s\
+ and reports.duration = recipes.report_duration\
+ and reports.date = %s\
+ and reports.formula = recipes.report_formula', (i, start_date))
 		change = 0
 
 		these_stocks = []
 		for row in cursor:
 			# print "row", row
 			# print "gain:", row["gain"], "weight:", row["weight"]
-			change += row["gain"] * row["weight"]
+
+			prices = price_mapper.find_by_stock_id_until_day(row["stock_id"], until_date=start_date, limit=2)
+			today = prices.next()
+			yesterday = prices.next()
+
+			diff = today.closing_price/yesterday.closing_price
+			
+			print "stock %s went from %f (%s) to %f (%s) - change for %s" % (
+				row["stock_id"],
+				yesterday.closing_price,
+				yesterday.date,
+				today.closing_price,
+				today.date,
+				start_date
+			)
+
+			change += diff * row["weight"]
 			these_stocks.append(row["stock_id"])
 
 		diff = [a for a in set(these_stocks) if a not in set(last_stocks)]
@@ -58,7 +78,7 @@ for x in xrange(240):
 
 		current_return *= 1 + (change/100)
 		start_date += timedelta(days=1)
-		print "change:", change, "gain", row["gain"], "weight", row["weight"]
+		print "change:", change
 		print "start_date", start_date, "current_return:", current_return
 
 	if current_return > top_return[1]:

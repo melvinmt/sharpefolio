@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 
 import MySQLdb
-from datetime import date, timedelta
+import argparse
+from datetime import date, timedelta, datetime
 from sharpefolio import stocks
 from sharpefolio import reports
 from sharpefolio import calc
 
+def parseDateArg(string):
+	return datetime.strptime("%s" % string, "%Y-%m-%d").date()
+
 connection = MySQLdb.connect(
 	host="127.0.0.1",
-	user="vagrant",
-	passwd="vagrant",
+	user="root",
+	passwd="root",
 	db="sharpefolio"
 )
 
@@ -32,7 +36,21 @@ report_mapper = reports.ReportMapper(report_repository)
 ratio_repository = reports.RatioMysqlRepository(connection)
 ratio_mapper = reports.RatioMapper(ratio_repository)
 
-reports_collection = report_mapper.find_all()
+parser = argparse.ArgumentParser(description='Generate the ratios for the reports within the date range.')
+
+yesterday = datetime.now().date()
+
+parser.add_argument('startDate', type=parseDateArg)
+parser.add_argument('--endDate', type=parseDateArg, default=yesterday)
+
+args = parser.parse_args()
+
+since_date = args.startDate
+until_date = args.endDate
+
+reports_collection = report_mapper.find_within_date(since_date, until_date)
+
+print reports_collection
 
 for report in reports_collection.loop():
 	# Report date range
@@ -50,6 +68,6 @@ for report in reports_collection.loop():
 		else:
 			value = ratio.sortino()
 
-		print 'calculating %s ratio %d for %s (%s - %d weeks): %f' % (report.formula, report.id, stock.symbol, report.date, report.duration, value)
+		print 'calculating %s ratio %d for %s (%s - %d days): %f' % (report.formula, report.id, stock.symbol, report.date, report.duration, value)
 		ratio_entry = reports.Ratio(stock.id, report.id, value)
 		ratio_mapper.insert(ratio_entry)

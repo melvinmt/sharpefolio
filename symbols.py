@@ -89,7 +89,7 @@ def main():
     if list_industries:
         for industry in industries:
             if 'company' in industry:
-                # print industry['id'], "-", industry['name']
+                print industry['id'], "-", industry['name']
                 # print industry['id']
                 industry['id']
         return

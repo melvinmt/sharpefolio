@@ -76,23 +76,23 @@ for i, file in enumerate(files):
     
 
 
+print "calculating results..."
+
 # Stocks are sorted by sharpe ratio, then the top n stocks are analysed for cross-correlation
 # top_n_equities=int(len(sharpe_ratios)*0.17)
 top_n_equities=20
-
-
 
 # Sort the indexes of the sharpe_ratios array in order.
 sorted_sharpe_indices = np.argsort(sharpe_ratios)[::-1][0:top_n_equities]
 print "sorted_sharpe_indices", sorted_sharpe_indices
 
 all_stocks = [symbols[i] for i in sorted_sharpe_indices]
-print all_stocks
+print "all_stocks:", all_stocks
 
 all_sharpe_ratios = [sharpe_ratios[i] for i in sorted_sharpe_indices]
 sharpe_ratios = all_sharpe_ratios
 print "sharpe_ratios:", sharpe_ratios[0:top_n_equities]
-print all_sharpe_ratios
+print "all_sharpe_ratios:", all_sharpe_ratios
 
 check_all_sharpe_ratios = []
 check_all_stocks = []
@@ -101,13 +101,13 @@ for i, sharpe_ratio in enumerate(all_sharpe_ratios):
     if math.isnan(sharpe_ratio) == False:
         check_all_sharpe_ratios.append(sharpe_ratio)
         check_all_stocks.append(all_stocks[i])
-print check_all_stocks
-print check_all_sharpe_ratios
+print "check_all_stocks:", check_all_stocks
+print "check_all_sharpe_ratios:", check_all_sharpe_ratios
 
 all_stocks = check_all_stocks
 all_sharpe_ratios = check_all_sharpe_ratios
 
-print "sorted_sharpe_indices", sorted_sharpe_indices
+print "sorted_sharpe_indices:", sorted_sharpe_indices
 
 # Next we create a datastructure to hold the daily returns of the top n equities
 cov_data = np.zeros((datalength-1, top_n_equities))
@@ -129,14 +129,13 @@ total_corr = [sum([cormat[x[0]][x[1]] for x in combinations(p, 2)]) for p in por
 
 # Find the portfolio with the smallest sum of correlations, and convert that back into 
 # the instrument names via a lookup in the symbols array
-best_portfolio=[symbols[sorted_sharpe_indices[i]] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
-print("stocks:")
-print(best_portfolio)
+print "portfolios:", portfolios[total_corr.index(np.nanmin(total_corr))]
 
-best_sharpe_ratios = [sharpe_ratios[sorted_sharpe_indices[i]] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
-print("sharpe ratios:")
-print(best_sharpe_ratios)
+best_portfolio=[symbols[sorted_sharpe_indices[i]] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
+print "best_portfolio:", best_portfolio
+
+best_sharpe_ratios = [sharpe_ratios[i] for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
+print "best_sharpe_ratios:", best_sharpe_ratios
 
 allocation = [best_sharpe_ratios/sum(best_sharpe_ratios)]
-print("allocation:")
-print(allocation)
+print "allocation:", allocation

@@ -12,7 +12,6 @@ import datetime
 import sys
 import os
 
-
 def get_data(data_path, ls_symbols):
 
     #Create path if it doesn't exist
@@ -22,7 +21,20 @@ def get_data(data_path, ls_symbols):
     #utils.clean_paths(data_path)   
 
     _now =datetime.datetime.now();
+    _delta = datetime.timedelta(days=7)
+    _start = _now - _delta
     miss_ctr=0; #Counts how many symbols we could get
+
+    folder = data_path + "data/"
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                print "delete the_file:", the_file
+                os.unlink(file_path)
+        except Exception, e:
+            print "error deleting file:", e
+
     for symbol in ls_symbols:
         symbol_name = symbol
 
@@ -31,8 +43,15 @@ def get_data(data_path, ls_symbols):
         
         try:
             print "fetching data for stock: ", str(symbol_name)
+
+            start_month = _start.month - 1 % 12
+
+            date_params = {'a':start_month, 'b':_start.day, 'c':_start.year, 'd':_now.month, 'e':_now.day, 'f':_now.year, 's': str(symbol), 'g': 'd'}
+
+            print "date_params:", date_params
+
             # params= urllib.urlencode ({'a':10, 'b':20, 'c':2012, 'd':_now.month, 'e':_now.day, 'f':_now.year, 's': str(symbol)})
-            params= urllib.urlencode ({'a':10, 'b':19, 'c':2013, 'd':11, 'e':19, 'f':2013, 's': str(symbol), 'g': 'd'})
+            params= urllib.urlencode (date_params)
             # params= urllib.urlencode ({'a':9, 'b':26, 'c':2012, 'd':10, 'e':28, 'f':2012, 's': str(symbol)})
             url = "http://ichart.finance.yahoo.com/table.csv?%s" % params
             url_get= urllib2.urlopen(url)

@@ -4,7 +4,8 @@ CREATE  TABLE `sharpefolio`.`prices` (
   `date` date NOT NULL ,
   `closing_price` double(10,4) UNSIGNED NOT NULL ,
   `change` double(14,8) NOT NULL DEFAULT 0 ,
-  PRIMARY KEY (`id`, `stock_id`, `date`)
+  PRIMARY KEY (`id`, `stock_id`, `date`),
+  UNIQUE KEY `unique_price` (`stock_id`, `date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `stocks` (
@@ -53,6 +54,3 @@ CREATE TABLE `recipes` (
   `report_formula` varchar(30) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-ALTER TABLE `sharpefolio`.`prices`
-ADD UNIQUE INDEX `unique_price` (`stock_id` ASC, `date` ASC);

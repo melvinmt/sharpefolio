@@ -21,7 +21,7 @@ def get_data(data_path, ls_symbols):
     #utils.clean_paths(data_path)   
 
     _now =datetime.datetime.now();
-    _delta = datetime.timedelta(days=7)
+    _delta = datetime.timedelta(days=28)
     _start = _now - _delta
     miss_ctr=0; #Counts how many symbols we could get
 
@@ -95,7 +95,8 @@ def read_symbols(s_symbols_file):
 
 def main():
     path = './'
-    ls_symbols = read_symbols('symbols/symbols.txt')
+    # ls_symbols = read_symbols('symbols/symbols.txt')
+    ls_symbols = read_symbols('symbols/oil.txt')
     get_data(path, ls_symbols)
 
 if __name__ == '__main__':

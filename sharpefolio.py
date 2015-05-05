@@ -139,6 +139,7 @@ best_portfolio = [symbols[sorted_sharpe_indices[i]]
                   for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
 print "best_portfolio:", best_portfolio
 
+
 best_sharpe_ratios = [sharpe_ratios[i]
                       for i in portfolios[total_corr.index(np.nanmin(total_corr))]]
 print "best_sharpe_ratios:", best_sharpe_ratios

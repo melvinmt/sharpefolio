@@ -30,7 +30,7 @@ def get_data(data_path, ls_symbols):
     for the_file in os.listdir(folder):
         file_path = os.path.join(folder, the_file)
         try:
-            if os.path.isfile(file_path):
+            if os.path.isfile(file_path) and the_file != ".gitignore":
                 print "delete the_file:", the_file
                 os.unlink(file_path)
         except Exception, e:
